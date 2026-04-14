@@ -8,14 +8,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func DeleteUser(conn *pgx.Conn, p models.User) error {
+func DeleteUserByID(conn *pgx.Conn, id int) error {
 	query := `
 		DELETE FROM users
 		WHERE id = $1
 	`
-	_, err := conn.Exec(context.Background(), query,
-		p.ID,
-	)
+	_, err := conn.Exec(context.Background(), query, id)
 	return err
 
 }

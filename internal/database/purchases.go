@@ -7,14 +7,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func DeletePurchase(conn *pgx.Conn, p models.Purchase) error {
+func DeletePurchaseByID(conn *pgx.Conn, id int) error {
 	query := `
 		DELETE FROM purchases
 		WHERE id = $1
 	`
-	_, err := conn.Exec(context.Background(), query,
-		p.ID,
-	)
+	_, err := conn.Exec(context.Background(), query, id)
 	return err
 }
 

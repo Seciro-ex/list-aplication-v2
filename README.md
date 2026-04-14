@@ -52,6 +52,21 @@ PGADMIN_PASSWORD= ***
   ```
 - Status: `200 OK` on success, `500 Internal Server Error` on failure
 
+**`POST /delete-user`**
+- Description: Delete an existing user by passing the user payload in the request body
+- Request Body:
+  ```json
+  {
+    "id": "integer",
+    "username": "string",
+    "email": "string",
+    "password": "string",
+    "created_at": "timestamp"
+  }
+  ```
+- Response: `User deleted successfully!`
+- Status: `200 OK` on success, `400 Bad Request` or `500 Internal Server Error` on failure
+
 ### Purchase Management
 
 **`POST /add-purchase`**
@@ -85,3 +100,40 @@ PGADMIN_PASSWORD= ***
   ]
   ```
 - Status: `200 OK` on success, `500 Internal Server Error` on failure
+
+**`POST /delete-purchase`**
+- Description: Delete an existing purchase by passing the purchase payload in the request body
+- Request Body:
+  ```json
+  {
+    "id": "integer",
+    "image_url": "string",
+    "cost": "decimal",
+    "item_url": "string",
+    "item_name": "string",
+    "user_id": "integer"
+  }
+  ```
+- Response: `Purchase deleted successfully!`
+- Status: `200 OK` on success, `400 Bad Request` or `500 Internal Server Error` on failure
+
+**`POST /edit-purchase`**
+- Description: Edit an existing purchase by passing the updated purchase payload in the request body
+- Request Body:
+  ```json
+  {
+    "id": "integer",
+    "image_url": "string",
+    "cost": "decimal",
+    "item_url": "string",
+    "item_name": "string",
+    "user_id": "integer"
+  }
+  ```
+- Response: `Purchase edit successfully!`
+- Status: `200 OK` on success, `400 Bad Request` or `500 Internal Server Error` on failure
+
+## Running the server
+
+- The server starts on `http://localhost:8081`
+- Use `go run ./cmd` or build and run the binary after setting the environment variables

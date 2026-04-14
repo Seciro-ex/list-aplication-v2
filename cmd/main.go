@@ -9,9 +9,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -57,6 +59,13 @@ func main() {
 			http.Error(w, "Bad reqyest: invalid JSON", http.StatusBadRequest)
 			return
 		}
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(NewUser.Password), 14)
+		if err != nil {
+			http.Error(w, "Ошибка безопасности", 500)
+			return
+		}
+		NewUser.Password = string(hashedPassword)
+
 		err = database.SaveNewUser(conn, NewUser)
 		if err != nil {
 			log.Printf("Error on saving user: %v", err)
@@ -70,38 +79,44 @@ func main() {
 
 	// ENDPOINT (/edit-user)
 	http.HandleFunc("/edit-user", func(w http.ResponseWriter, r *http.Request) {
-		var EditedUser models.User
+		idStr := r.URL.Query().Get("id")
+		id, _ := strconv.Atoi(idStr)
 
-		err := json.NewDecoder(r.Body).Decode(&EditedUser)
+		var data models.User
+		err := json.NewDecoder(r.Body).Decode(&data)
 		if err != nil {
 			http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
 			return
 		}
+		data.ID = id
 
-		err = database.EditUser(conn, EditedUser)
+		err = database.EditUser(conn, data)
 		if err != nil {
-			log.Printf("Error on edit user: %v", err)
-			http.Error(w, "Can't edit user", http.StatusInternalServerError)
+			http.Error(w, "Update failed", 500)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "User edit successfully!")
 	})
 
 	// ENDPOINT (/delete-user)
 	http.HandleFunc("/delete-user", func(w http.ResponseWriter, r *http.Request) {
-		var User models.User
 
-		err := json.NewDecoder(r.Body).Decode(&User)
-		if err != nil {
-			http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
+		idStr := r.URL.Query().Get("id")
+		if idStr == "" {
+			http.Error(w, "Bad request: missing user ID", http.StatusBadRequest)
 			return
 		}
 
-		err = database.DeleteUser(conn, User)
+		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			log.Printf("Error on deleting: %v", err)
+			http.Error(w, "Invalid id format", http.StatusBadRequest)
+			return
+		}
+
+		err = database.DeleteUserByID(conn, id)
+		if err != nil {
+			log.Printf("Error deleting user: %v", err)
 			http.Error(w, "Can't delete user", http.StatusInternalServerError)
 			return
 		}
@@ -118,15 +133,20 @@ func main() {
 
 	// ENDPOINT (/delete-purchase)
 	http.HandleFunc("/delete-purchase", func(w http.ResponseWriter, r *http.Request) {
-		var Item models.Purchase
 
-		err := json.NewDecoder(r.Body).Decode(&Item)
-		if err != nil {
-			http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
+		idStr := r.URL.Query().Get("id")
+		if idStr == "" {
+			http.Error(w, "Bad request: missing purchase ID", http.StatusBadRequest)
 			return
 		}
 
-		err = database.DeletePurchase(conn, Item)
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid id format", http.StatusBadRequest)
+			return
+		}
+
+		err = database.DeletePurchaseByID(conn, id)
 		if err != nil {
 			log.Printf("Error on deleting: %v", err)
 			http.Error(w, "Can't delete purchase", http.StatusInternalServerError)
@@ -139,6 +159,9 @@ func main() {
 
 	// ENDPOINT (/edit-purchase)
 	http.HandleFunc("/edit-purchase", func(w http.ResponseWriter, r *http.Request) {
+		idStr := r.URL.Query().Get("id")
+		id, _ := strconv.Atoi(idStr)
+
 		var EditedPurchase models.Purchase
 
 		err := json.NewDecoder(r.Body).Decode(&EditedPurchase)
@@ -146,15 +169,14 @@ func main() {
 			http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
 			return
 		}
+		EditedPurchase.ID = id
 
 		err = database.EditPurchase(conn, EditedPurchase)
 		if err != nil {
-			log.Printf("Error on edit purchase: %v", err)
-			http.Error(w, "Can't edit purchase", http.StatusInternalServerError)
+			http.Error(w, "Update failed", 500)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "Purchase edit successfully!")
 	})
 
