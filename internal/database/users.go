@@ -1,0 +1,70 @@
+package database
+
+import (
+	"context"
+	"list-application-v2/internal/models"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+)
+
+func DeleteUser(conn *pgx.Conn, p models.User) error {
+	query := `
+		DELETE FROM users
+		WHERE id = $1
+	`
+	_, err := conn.Exec(context.Background(), query,
+		p.ID,
+	)
+	return err
+
+}
+
+func EditUser(conn *pgx.Conn, p models.User) error {
+	query := `
+		UPDATE users
+		SET username = $1, email = $2, password = $3
+		WHERE id = $4
+	`
+	_, err := conn.Exec(context.Background(), query,
+		p.Username,
+		p.Email,
+		p.Password,
+		p.ID,
+	)
+	return err
+}
+
+func SaveNewUser(conn *pgx.Conn, p models.User) error {
+	query := `
+		INSERT INTO users (username, email, password, created_at)
+		VALUES ($1, $2, $3, $4)
+	`
+	p.CreatedAt = time.Now()
+	_, err := conn.Exec(context.Background(), query,
+		p.Username,
+		p.Email,
+		p.Password,
+		p.CreatedAt,
+	)
+	return err
+}
+
+func GetAllUsers(conn *pgx.Conn) ([]models.User, error) {
+	rows, err := conn.Query(context.Background(), "SELECT id, username, email, password, created_at FROM users")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.User
+	for rows.Next() {
+		var p models.User
+		err := rows.Scan(&p.ID, &p.Username, &p.Email, &p.Password, &p.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, p)
+	}
+	return results, nil
+}

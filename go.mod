@@ -1,10 +1,11 @@
-module my_project
+module list-application-v2
 
 go 1.25.7
 
 require (
 	github.com/jackc/pgx/v5 v5.9.1
 	github.com/joho/godotenv v1.5.1
+	github.com/shopspring/decimal v1.4.0
 )
 
 require (
