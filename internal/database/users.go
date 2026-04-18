@@ -66,3 +66,11 @@ func GetAllUsers(conn *pgx.Conn) ([]models.User, error) {
 	}
 	return results, nil
 }
+
+func GetUserByUsername(conn *pgx.Conn, username string) (models.User, error) {
+	var u models.User
+	query := `SELECT id, username, password FROM users WHERE username = $1`
+
+	err := conn.QueryRow(context.Background(), query, username).Scan(&u.ID, &u.Username, &u.Password)
+	return u, err
+}

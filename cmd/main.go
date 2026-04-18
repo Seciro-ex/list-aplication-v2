@@ -14,6 +14,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
@@ -35,6 +39,23 @@ func main() {
 
 	/*
 		┌-----------------------------------┐
+		|        DATABASE MIGRATION         |
+		└-----------------------------------┘
+	*/
+	m, err := migrate.New(
+		"file://migrations",
+		os.Getenv("DATABASE_URL"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal(err)
+	}
+
+	/*
+		┌-----------------------------------┐
 		|      Status check endpoints       |
 		└-----------------------------------┘
 	*/
@@ -50,7 +71,31 @@ func main() {
 		└-----------------------------------┘
 	*/
 
-	// ENDPOINT (/add-user)
+	// ENDPOINT (/login)
+	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		var input models.User
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		userFromDB, err := database.GetUserByUsername(conn, input.Username)
+		if err != nil {
+			http.Error(w, "User not found or Access Denied", http.StatusUnauthorized)
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(userFromDB.Password), []byte(input.Password))
+		if err != nil {
+			log.Printf("Wrong password for user %s", input.Username)
+			http.Error(w, "Access Denied", http.StatusUnauthorized)
+			return
+		}
+
+		fmt.Fprintf(w, "Welcome, %s!", userFromDB.Username)
+	})
+
+	// ENDPOINT (/register)
 	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
 		var NewUser models.User
 
