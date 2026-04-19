@@ -3,16 +3,17 @@ package database
 import (
 	"context"
 	"list-application-v2/internal/models"
+	"log"
 
 	"github.com/jackc/pgx/v5"
 )
 
-func DeletePurchaseByID(conn *pgx.Conn, id int) error {
+func DeletePurchaseByID(conn *pgx.Conn, id int, userID int) error {
 	query := `
 		DELETE FROM purchases
-		WHERE id = $1
+		WHERE id = $1 AND user_id = $2
 	`
-	_, err := conn.Exec(context.Background(), query, id)
+	_, err := conn.Exec(context.Background(), query, id, userID)
 	return err
 }
 
@@ -20,7 +21,7 @@ func EditPurchase(conn *pgx.Conn, p models.Purchase) error {
 	query := `
 		UPDATE purchases
 		SET image_url = $1, cost = $2, item_url = $3, item_name = $4
-		WHERE id = $5
+		WHERE id = $5 AND user_id = $6
 	`
 	_, err := conn.Exec(context.Background(), query,
 		p.ImageURL,
@@ -28,6 +29,7 @@ func EditPurchase(conn *pgx.Conn, p models.Purchase) error {
 		p.ItemURL,
 		p.ItemName,
 		p.ID,
+		p.UserID,
 	)
 	return err
 }
@@ -59,6 +61,27 @@ func GetAllPurchases(conn *pgx.Conn) ([]models.Purchase, error) {
 		var p models.Purchase
 		err := rows.Scan(&p.ID, &p.ItemName, &p.Cost, &p.ItemURL)
 		if err != nil {
+			return nil, err
+		}
+		results = append(results, p)
+	}
+	return results, nil
+}
+
+func GetPurchasesByID(conn *pgx.Conn, id int) ([]models.Purchase, error) {
+	rows, err := conn.Query(context.Background(), "SELECT id, user_id, item_name, cost, item_url, image_url FROM purchases WHERE user_id = $1", id)
+	if err != nil {
+		log.Printf("Query error: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.Purchase
+	for rows.Next() {
+		var p models.Purchase
+		err := rows.Scan(&p.ID, &p.UserID, &p.ItemName, &p.Cost, &p.ItemURL, &p.ImageURL)
+		if err != nil {
+			log.Printf("Scan error: %v", err)
 			return nil, err
 		}
 		results = append(results, p)

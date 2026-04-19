@@ -1,0 +1,429 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Сервер для управления списком покупок.",
+        "title": "List Application API",
+        "contact": {},
+        "version": "2.0"
+    },
+    "host": "localhost:8081",
+    "basePath": "/",
+    "paths": {
+        "/add-purchase": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает запись о покупке для текущего пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "purchases"
+                ],
+                "summary": "Добавить покупку",
+                "parameters": [
+                    {
+                        "description": "Данные покупки",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Purchase"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Purchase added successfully!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/delete-purchase": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаляет покупку по её ID",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "purchases"
+                ],
+                "summary": "Удалить покупку",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Purchase ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Purchase deleted successfully!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/delete-user": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаляет пользователя по ID",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Удаление аккаунта",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/edit-purchase": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обновляет информацию о покупке",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "purchases"
+                ],
+                "summary": "Редактировать покупку",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Purchase ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Новые данные покупки",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Purchase"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Purchase edit successfully!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/edit-user": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обновляет данные профиля текущего пользователя (требует ID в Query)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Редактирование пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Новые данные",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User edit successfully!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Проверяет учетные данные и выдает JWT токен",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Вход в систему",
+                "parameters": [
+                    {
+                        "description": "Данные для входа (username, password)",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "token: string",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ping": {
+            "get": {
+                "description": "Проверяет, отвечает ли база данных",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Проверка базы данных",
+                "responses": {
+                    "200": {
+                        "description": "Database connection is alive!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Создает нового пользователя в системе",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Регистрация",
+                "parameters": [
+                    {
+                        "description": "Данные пользователя",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "User added successfully!",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation failed / Invalid JSON",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/purchases": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает все покупки текущего авторизованного пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "purchases"
+                ],
+                "summary": "Список покупок пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Purchase"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "description": "Возвращает список всех зарегистрированных юзеров (публично)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Список всех пользователей",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.User"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Purchase": {
+            "type": "object",
+            "required": [
+                "cost",
+                "item_name"
+            ],
+            "properties": {
+                "cost": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "item_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "item_url": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 6
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

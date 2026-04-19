@@ -1,0 +1,277 @@
+basePath: /
+definitions:
+  models.Purchase:
+    properties:
+      cost:
+        type: number
+      id:
+        type: integer
+      image_url:
+        type: string
+      item_name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      item_url:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - cost
+    - item_name
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        maxLength: 100
+        minLength: 2
+        type: string
+      id:
+        type: integer
+      password:
+        maxLength: 50
+        minLength: 6
+        type: string
+      username:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+host: localhost:8081
+info:
+  contact: {}
+  description: Сервер для управления списком покупок.
+  title: List Application API
+  version: "2.0"
+paths:
+  /add-purchase:
+    post:
+      consumes:
+      - application/json
+      description: Создает запись о покупке для текущего пользователя
+      parameters:
+      - description: Данные покупки
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.Purchase'
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Purchase added successfully!
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Добавить покупку
+      tags:
+      - purchases
+  /delete-purchase:
+    delete:
+      description: Удаляет покупку по её ID
+      parameters:
+      - description: Purchase ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Purchase deleted successfully!
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Удалить покупку
+      tags:
+      - purchases
+  /delete-user:
+    delete:
+      description: Удаляет пользователя по ID
+      parameters:
+      - description: User ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: User deleted successfully!
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Удаление аккаунта
+      tags:
+      - auth
+  /edit-purchase:
+    post:
+      consumes:
+      - application/json
+      description: Обновляет информацию о покупке
+      parameters:
+      - description: Purchase ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные покупки
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.Purchase'
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Purchase edit successfully!
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Редактировать покупку
+      tags:
+      - purchases
+  /edit-user:
+    post:
+      consumes:
+      - application/json
+      description: Обновляет данные профиля текущего пользователя (требует ID в Query)
+      parameters:
+      - description: User ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: User edit successfully!
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Редактирование пользователя
+      tags:
+      - auth
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет учетные данные и выдает JWT токен
+      parameters:
+      - description: Данные для входа (username, password)
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'token: string'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Вход в систему
+      tags:
+      - auth
+  /ping:
+    get:
+      description: Проверяет, отвечает ли база данных
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Database connection is alive!
+          schema:
+            type: string
+      summary: Проверка базы данных
+      tags:
+      - system
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Создает нового пользователя в системе
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: User added successfully!
+          schema:
+            type: string
+        "400":
+          description: Validation failed / Invalid JSON
+          schema:
+            type: string
+      summary: Регистрация
+      tags:
+      - auth
+  /user/purchases:
+    get:
+      description: Возвращает все покупки текущего авторизованного пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Purchase'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Список покупок пользователя
+      tags:
+      - purchases
+  /users:
+    get:
+      description: Возвращает список всех зарегистрированных юзеров (публично)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+      summary: Список всех пользователей
+      tags:
+      - system
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
