@@ -166,7 +166,7 @@ func main() {
 
 	// START SERVER
 	fmt.Println("Сервер запущен на http://localhost:8081")
-	err = http.ListenAndServe(":8081", nil)
+	err = http.ListenAndServe(":8081", CORSMiddleware(http.DefaultServeMux))
 	if err != nil {
 		fmt.Printf("Ошибка сервера: %v\n", err)
 	}
@@ -544,5 +544,19 @@ func UserPurchasesListHandler(conn *pgx.Conn) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(list)
+	})
+}
+
+func CORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") // В проде лучше указать конкретный домен
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }
