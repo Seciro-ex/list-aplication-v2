@@ -28,7 +28,7 @@ async function handleLogin() {
             message.value = "Error: " + (data.error || "wrong credentials")
         }
     } catch (error) {
-        message.value = "Server doesn't respond"
+        message.value = "Error to login"
     }
 }
 </script>
@@ -56,7 +56,7 @@ async function handleLogin() {
         </button>
         </form>
 
-        <p v-if="message" :class="{'text-green-600': !message.includes('Error'), 'text-red-600': message.includes('Error')}" 
+        <p v-if="message" :class="{'text-green-600': !message.includes('Login'), 'text-red-600': message.includes('Server') || message.includes('Error')}" 
         class="mt-4 text-center text-sm font-medium">
         {{ message }}
         </p>
