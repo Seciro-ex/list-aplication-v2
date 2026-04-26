@@ -1,5 +1,20 @@
+<template>
+    <div class="flex items-center gap-2 mt-2">
+        <span class="text-xs font-bold text-red-600">Delete this item?</span>
+        <button @click="DeleteItem" 
+                class="bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition shadow-sm">
+            Yes
+        </button>
+        <button @click="emit('cancel')" 
+                class="bg-gray-200 text-gray-700 px-3 py-1 rounded-md text-xs hover:bg-gray-300 transition">
+            No
+        </button>
+        <span v-if="message" class="text-xs text-red-500 ml-2">{{ message }}</span>
+    </div>
+</template>
+
 <script setup>
-import { ref} from 'vue'
+import { ref } from 'vue'
 
 const props = defineProps(['itemId'])
 const emit = defineEmits(['item-deleted', 'cancel'])
@@ -27,24 +42,7 @@ async function DeleteItem() {
             message.value = "Error: " + errorText
         }
     } catch (error) {
-        message.value = "Server error: " + error.message
+        message.value = "Server error"
     }
 }
 </script>
-
-<template>
-    <div class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg shadow-inner">
-        <p class="text-sm font-bold text-red-800 mb-2">Are you sure?</p>
-        <div class="flex gap-2">
-            <button @click="DeleteItem" 
-                    class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">
-                YES
-            </button>
-            <button @click="emit('cancel')" 
-                    class="bg-gray-300 text-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-400">
-                NO
-            </button>
-        </div>
-        <p v-if="message" class="text-xs text-red-600 mt-1">{{ message }}</p>
-    </div>
-</template>

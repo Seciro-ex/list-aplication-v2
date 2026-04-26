@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import AddPurchases from './AddPurchases.vue'
 import DeletePurchases from './DeletePurchases.vue'
+import EditPurchases from './EditPurchases.vue'
 
 const emit = defineEmits(['logout'])
 
@@ -9,6 +10,7 @@ const message = ref('')
 const purchases = ref([])
 const isFormVisible = ref(false)
 const itemToDeleteId = ref(null)
+const itemToEditId = ref(null)
 
 const totalPrice = computed(() => {
     return purchases.value.reduce((sum, item) => {
@@ -68,6 +70,11 @@ function handlePurchaseDeleted() {
     loadPurchases()
 }
 
+function handlePurchasesEdit() {
+    itemToEditId.value = null
+    loadPurchases()
+}
+
 onMounted(() => {
     loadPurchases()
 })
@@ -100,42 +107,64 @@ onMounted(() => {
         </div>
 
         <div class="space-y-4">
-            <div v-for="item in purchases" :key="item.id" 
-                class="flex items-center justify-between p-4 bg-gray-100 rounded-lg shadow-sm">
-                <div>
-                <div class="flex items-center gap-4">
-                    <img v-if="item.image_url" :src="item.image_url" alt="item" class="w-16 h-16 object-cover rounded-md border">
-                    <div v-else 
-                        :class="['w-16 h-16 rounded-md flex items-center justify-center text-white font-bold text-xl uppercase shadow-sm', getRandomColor(item.id)]">
-                        {{ item.item_name[0] }}
-                    </div>
-
-                    <div>
-                        <p class="font-semibold text-gray-800 text-lg">{{ item.item_name }}</p>
-                        <a v-if="item.item_url" :href="item.item_url" target="_blank" class="text-sm text-blue-500 hover:underline">
-                            Go to shop
-                        </a>
-                        <button @click="" 
-                            class="text-sm  bg-orange-200 rounded-lg p-2 hover:bg-orange-500 transition">
-                            Edit
-                        </button>
-                        <button @click="itemToDeleteId = item.id" 
-                                class="text-sm ml-2 bg-red-200 rounded-lg p-2 hover:bg-red-500 transition">
-                            Delete
-                        </button>
-                    </div>
-                </div>
-                <DeletePurchases 
-                    v-if="itemToDeleteId === item.id" 
-                    :itemId="item.id" 
-                    @item-deleted="handlePurchaseDeleted"
-                    @cancel="itemToDeleteId = null" 
-                />
-                </div>
+            <div v-for="item in purchases" :key="item.id">
                 
-                <div class="text-xl font-bold text-green-600">
-                    {{ item.cost }} €
+                <div v-if="itemToEditId !== item.id" 
+                    class="flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                    
+                    <div class="flex items-center gap-4">
+                        <img v-if="item.image_url" :src="item.image_url" alt="item" class="w-16 h-16 object-cover rounded-md border">
+                        <div v-else 
+                            :class="['w-16 h-16 rounded-md flex items-center justify-center text-white font-bold text-xl uppercase shadow-sm', getRandomColor(item.id)]">
+                            {{ item.item_name[0] }}
+                        </div>
+
+                        <div>
+                            <p class="font-semibold text-gray-800 text-lg">{{ item.item_name }}</p>
+                            
+                            <a v-if="item.item_url" :href="item.item_url" target="_blank" class="text-sm text-blue-500 hover:text-blue-700 hover:underline">
+                                Go to shop
+                            </a>
+
+                            <div class="mt-2 flex items-center gap-2">
+                                <template v-if="itemToDeleteId !== item.id">
+                                    <button @click="itemToEditId = item.id" 
+                                            class="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-md hover:bg-orange-200 transition">
+                                        Edit
+                                    </button>
+                                    <button @click="itemToDeleteId = item.id" 
+                                            class="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200 transition">
+                                        Delete
+                                    </button>
+                                </template>
+
+                                <DeletePurchases 
+                                    v-if="itemToDeleteId === item.id" 
+                                    :itemId="item.id" 
+                                    @item-deleted="handlePurchaseDeleted"
+                                    @cancel="itemToDeleteId = null" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-xl font-bold text-green-600 whitespace-nowrap ml-4">
+                        {{ item.cost }} €
+                    </div>
                 </div>
+
+                
+                <EditPurchases 
+                    v-if="itemToEditId === item.id"
+                    :itemId="item.id"
+                    :cost="item.cost"
+                    :image_url="item.image_url"
+                    :item_name="item.item_name"
+                    :item_url="item.item_url"
+                    @item-edited="handlePurchasesEdit"
+                    @cancel="itemToEditId = null"
+                />
+
             </div>
             <div v-if="purchases.length === 0 && !message" class="text-center text-gray-500 py-8">
                 Your list is empty. Time to add something!

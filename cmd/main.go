@@ -484,11 +484,15 @@ func PurchaseDeleteHandler(conn *pgx.Conn) http.HandlerFunc {
 func PurchaseEditHandler(conn *pgx.Conn) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		idStr := r.URL.Query().Get("id")
-		id, _ := strconv.Atoi(idStr)
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid purchase ID", http.StatusBadRequest)
+			return
+		}
 
 		var EditedPurchase models.Purchase
 
-		err := json.NewDecoder(r.Body).Decode(&EditedPurchase)
+		err = json.NewDecoder(r.Body).Decode(&EditedPurchase)
 		if err != nil {
 			http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
 			return
@@ -500,10 +504,12 @@ func PurchaseEditHandler(conn *pgx.Conn) http.HandlerFunc {
 
 		err = database.EditPurchase(conn, EditedPurchase)
 		if err != nil {
-			http.Error(w, "Update failed", 500)
+			log.Printf("Edit error: %v", err)
+			http.Error(w, "Update failed: item not found or access denied", http.StatusForbidden)
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "Purchase edit successfully!")
 	})
 }

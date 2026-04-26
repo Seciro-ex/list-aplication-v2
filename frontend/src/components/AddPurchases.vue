@@ -44,7 +44,7 @@ async function addItem() {
             message.value = "Ошибка: " + (data.error || "Не удалось добавить")
         }
     } catch(error) {
-        message.value = "Error: " + error
+        message.value = "Error: bad data " + error
     }
 }
 </script>
