@@ -1,5 +1,5 @@
 <template>
-    <div class="flex items-center gap-2 mt-2">
+    <div class="flex items-center gap-2">
         <span class="text-xs font-bold text-red-600">Delete this item?</span>
         <button @click="DeleteItem" 
                 class="bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition shadow-sm">

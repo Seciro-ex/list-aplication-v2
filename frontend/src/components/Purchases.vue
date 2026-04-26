@@ -113,37 +113,44 @@ onMounted(() => {
                     class="flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
                     
                     <div class="flex items-center gap-4">
-                        <img v-if="item.image_url" :src="item.image_url" alt="item" class="w-16 h-16 object-cover rounded-md border">
-                        <div v-else 
-                            :class="['w-16 h-16 rounded-md flex items-center justify-center text-white font-bold text-xl uppercase shadow-sm', getRandomColor(item.id)]">
-                            {{ item.item_name[0] }}
-                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="w-32 h-20 shrink-0 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center p-2 overflow-hidden shadow-sm">
+                                
+                                <img v-if="item.image_url" 
+                                    :src="item.image_url" 
+                                    @error="item.image_url = ''"
+                                    alt="item" 
+                                    class="w-full h-full object-contain" 
+                                >
+                                <div v-else 
+                                    :class="['w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-xl uppercase', getRandomColor(item.id)]">
+                                    {{ item.item_name[0] }}
+                                </div>
+                            </div>
 
-                        <div>
-                            <p class="font-semibold text-gray-800 text-lg">{{ item.item_name }}</p>
-                            
-                            <a v-if="item.item_url" :href="item.item_url" target="_blank" class="text-sm text-blue-500 hover:text-blue-700 hover:underline">
-                                Go to shop
-                            </a>
+                            <div class="grow min-w-0">
+                                <p class="font-bold text-gray-900 text-lg truncate">{{ item.item_name }}</p>
+                                
+                                <a v-if="item.item_url" :href="item.item_url" target="_blank" class="text-xs text-blue-500 hover:underline block mb-2">
+                                    Go to shop
+                                </a>
 
-                            <div class="mt-2 flex items-center gap-2">
-                                <template v-if="itemToDeleteId !== item.id">
-                                    <button @click="itemToEditId = item.id" 
-                                            class="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-md hover:bg-orange-200 transition">
-                                        Edit
-                                    </button>
-                                    <button @click="itemToDeleteId = item.id" 
-                                            class="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200 transition">
-                                        Delete
-                                    </button>
-                                </template>
-
-                                <DeletePurchases 
-                                    v-if="itemToDeleteId === item.id" 
-                                    :itemId="item.id" 
-                                    @item-deleted="handlePurchaseDeleted"
-                                    @cancel="itemToDeleteId = null" 
-                                />
+                                <div class="flex items-center gap-2">
+                                    <template v-if="itemToDeleteId !== item.id">
+                                        <button @click="itemToEditId = item.id" class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded uppercase font-bold hover:bg-orange-200">Edit</button>
+                                        <button @click="itemToDeleteId = item.id" class="text-[10px] bg-red-100 text-red-700 px-2 py-1 rounded uppercase font-bold hover:bg-red-200">Delete</button>
+                                    </template>
+                                    <div>
+                                        <div class=" flex items-center gap-2">
+                                            <DeletePurchases 
+                                                v-if="itemToDeleteId === item.id" 
+                                                :itemId="item.id" 
+                                                @item-deleted="handlePurchaseDeleted"
+                                                @cancel="itemToDeleteId = null" 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
