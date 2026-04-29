@@ -7,10 +7,12 @@ A Go application for managing users and their purchases with PostgreSQL database
 DB_USER= ***
 DB_PASSWORD= ***
 DB_NAME= ***
-DATABASE_URL= postgres://user:password@host:port/dbname
+DATABASE_URL= postgres://user:password@host:port/dbname?sslmode=disable
 
 PGADMIN_EMAIL= ***
 PGADMIN_PASSWORD= ***
+
+JWT_SECRET=hI202*G;Q2Xm
 ```
 
 ## API Endpoints
