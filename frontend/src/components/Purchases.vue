@@ -100,8 +100,6 @@ onMounted(() => {
         </div>
         <AddPurchases v-if="isFormVisible" @added-item="handlePurchaseAdded" />
 
-        <p v-if="message" class="text-red-500 text-center mb-4">{{ message }}</p>
-
         <div class="flex justify-end p-4 bg-gray-50 rounded-lg shadow-sm mb-4">
             <h1>Total price: {{ totalPrice }} €</h1>
         </div>
