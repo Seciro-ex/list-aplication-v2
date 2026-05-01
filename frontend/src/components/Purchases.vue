@@ -4,13 +4,14 @@ import AddPurchases from './AddPurchases.vue'
 import DeletePurchases from './DeletePurchases.vue'
 import EditPurchases from './EditPurchases.vue'
 
-const emit = defineEmits(['logout'])
+const emit = defineEmits(['logout', 'profile'])
 
 const message = ref('')
 const purchases = ref([])
 const isFormVisible = ref(false)
 const itemToDeleteId = ref(null)
 const itemToEditId = ref(null)
+const ProfilOpen = ref(false)
 
 const totalPrice = computed(() => {
     return purchases.value.reduce((sum, item) => {
@@ -32,7 +33,7 @@ async function loadPurchases() {
             return
         }
 
-        const response = await fetch("http://localhost:8081/user/purchases", {
+        const response = await fetch("http://localhost:8081/api/user/purchases", {
             method: "GET",
             headers: { 
                 "Content-Type": "application/json", 
@@ -45,8 +46,7 @@ async function loadPurchases() {
             purchases.value = data || []
         } else if (response.status === 401) {
             message.value = "Session ended. Please login again."
-            localStorage.removeItem('token')
-            emit('logout')
+            handleLogout()
         } else {
             message.value = "Error when loading a list"
         }
@@ -84,7 +84,7 @@ onMounted(() => {
 <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
         <div class="flex justify-between items-center mb-4 border-b pb-4">
             <h1 class="text-2xl font-bold text-gray-800">My Shoping List</h1>
-            <div @click="" class="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl bg-pink-100 uppercase shadow-sm hover:bg-red-100">
+            <div @click="emit('profile')" class="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl bg-pink-100 uppercase shadow-sm hover:bg-red-100">
             </div>
         </div>
 
@@ -176,4 +176,5 @@ onMounted(() => {
             </div>
         </div>
     </div>
+    <Profil v-if="ProfilOpen" />
 </template>

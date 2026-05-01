@@ -9,7 +9,7 @@ const message = ref('')
 
 async function handleLogin() {
     try {
-        const response = await fetch("http://localhost:8081/login", {
+        const response = await fetch("http://localhost:8081/api/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -28,7 +28,7 @@ async function handleLogin() {
             message.value = "Error: " + (data.error || "wrong credentials")
         }
     } catch (error) {
-        message.value = "Error to login"
+        message.value = "Invalid username or password!"
     }
 }
 </script>
@@ -56,7 +56,7 @@ async function handleLogin() {
         </button>
         </form>
 
-        <p v-if="message" :class="{'text-green-600': !message.includes('Login'), 'text-red-600': message.includes('Server') || message.includes('Error')}" 
+        <p v-if="message" :class="{'text-green-600': !message.includes('Login'), 'text-red-600': message.includes('Server') || message.includes('Error') || message.includes('Invalid')}" 
         class="mt-4 text-center text-sm font-medium">
         {{ message }}
         </p>

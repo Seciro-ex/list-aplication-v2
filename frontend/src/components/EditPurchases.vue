@@ -10,12 +10,25 @@ const image_url = ref(props.image_url || '')
 
 const message = ref('')
 
+async function validateBeforeEdit() {
+    if (item_name.value.length <= 1) {
+        message.value = "Name must have at least 2 symbols!"
+        return
+    }
+    if (cost.value <= 0) {
+        message.value = "Cost must be at least 1!"
+        return
+    }
+    EditItem()
+}
+
+
 async function EditItem() {
     try {
     const token = localStorage.getItem('token')
     if (!token) return
 
-    const url = `http://localhost:8081/edit-purchase?id=${props.itemId}`
+    const url = `http://localhost:8081/api/edit-purchase?id=${props.itemId}`
 
     const response = await fetch(url, {
         method: "POST",
@@ -59,7 +72,7 @@ async function EditItem() {
             <input v-model="image_url" type="text" placeholder="Image link (optional)"
                    class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
             
-            <button @click="EditItem" 
+            <button @click="validateBeforeEdit" 
                     class="w-full bg-orange-500 text-white font-bold py-2 rounded shadow hover:bg-orange-600 transition">
                 Save to List
             </button>

@@ -107,8 +107,8 @@ func main() {
 		└-----------------------------------┘
 	*/
 
-	// ENDPOINT (/ping)
-	http.HandleFunc("/ping", DBping(conn))
+	// ENDPOINT (/api/ping)
+	http.HandleFunc("/api/ping", DBping(conn))
 
 	/*
 		┌-----------------------------------┐
@@ -116,17 +116,17 @@ func main() {
 		└-----------------------------------┘
 	*/
 
-	// ENDPOINT (/login)
-	http.HandleFunc("/login", LoginHandler(conn))
+	// ENDPOINT (/api/login)
+	http.HandleFunc("/api/login", LoginHandler(conn))
 
-	// ENDPOINT (/register)
-	http.HandleFunc("/register", RegisterHandler(conn))
+	// ENDPOINT (/api/register)
+	http.HandleFunc("/api/register", RegisterHandler(conn))
 
-	// ENDPOINT (/edit-user)
-	http.HandleFunc("/edit-user", UserEditHandler(conn))
+	// ENDPOINT (/api/edit-user)
+	http.HandleFunc("/api/edit-user", UserEditHandler(conn))
 
-	// ENDPOINT (/delete-user)
-	http.HandleFunc("/delete-user", UserDeleteHandler(conn))
+	// ENDPOINT (/api/delete-user)
+	http.HandleFunc("/api/delete-user", UserDeleteHandler(conn))
 
 	/*
 		┌-----------------------------------┐
@@ -134,14 +134,14 @@ func main() {
 		└-----------------------------------┘
 	*/
 
-	// ENDPOINT (/delete-purchase)
-	http.HandleFunc("/delete-purchase", PurchaseDeleteHandler(conn))
+	// ENDPOINT (/api/delete-purchase)
+	http.HandleFunc("/api/delete-purchase", PurchaseDeleteHandler(conn))
 
-	// ENDPOINT (/edit-purchase)
-	http.HandleFunc("/edit-purchase", PurchaseEditHandler(conn))
+	// ENDPOINT (/api/edit-purchase)
+	http.HandleFunc("/api/edit-purchase", PurchaseEditHandler(conn))
 
-	// ENDPOINT (/add-purchase)
-	http.HandleFunc("/add-purchase", PurchaseAddHandler(conn))
+	// ENDPOINT (/api/add-purchase)
+	http.HandleFunc("/api/add-purchase", PurchaseAddHandler(conn))
 
 	/*
 		┌-----------------------------------┐
@@ -149,11 +149,14 @@ func main() {
 		└-----------------------------------┘
 	*/
 
-	// ENDPOINT (/users)
-	http.HandleFunc("/users", UsersListHandler(conn))
+	// ENDPOINT (/api/users)
+	http.HandleFunc("/api/users", UsersListHandler(conn))
 
-	// ENDPOINT (/user/purchases)
-	http.HandleFunc("/user/purchases", UserPurchasesListHandler(conn))
+	// ENDPOINT (/api/user/purchases)
+	http.HandleFunc("/api/user/purchases", UserPurchasesListHandler(conn))
+
+	// ENDPOINT (/api/me)
+	http.HandleFunc("/api/me", GetCurrentUser(conn))
 
 	/*
 		┌-----------------------------------┐
@@ -162,7 +165,7 @@ func main() {
 	*/
 
 	// SWAGGER
-	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
+	http.HandleFunc("/api/swagger/", httpSwagger.WrapHandler)
 
 	// START SERVER
 	fmt.Println("Сервер запущен на http://localhost:8081")
@@ -222,7 +225,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // @Produce      json
 // @Param        input body models.User true "Данные для входа (username, password)"
 // @Success      200 {object} map[string]string "token: string"
-// @Router       /login [post]
+// @Router       /api/login [post]
 func LoginHandler(conn *pgx.Conn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input models.User
@@ -553,9 +556,33 @@ func UserPurchasesListHandler(conn *pgx.Conn) http.HandlerFunc {
 	})
 }
 
+func GetCurrentUser(conn *pgx.Conn) http.HandlerFunc {
+	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			http.Error(w, "Internal Server Error: context userID not found", http.StatusInternalServerError)
+			return
+		}
+		user, err := database.GetUserByID(conn, userID)
+		if err != nil {
+			log.Printf("Error fetching current user: %v", err)
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
+
+		user.Password = ""
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(user); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*") // В проде лучше указать конкретный домен
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 

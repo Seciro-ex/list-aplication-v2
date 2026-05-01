@@ -9,6 +9,18 @@ const item_name = ref('')
 const item_url = ref('')
 const message = ref('')
 
+async function validateBeforeAdd() {
+    if (item_name.value.length <= 1) {
+        message.value = "Name must have at least 2 symbols!"
+        return
+    }
+    if (cost.value <= 0) {
+        message.value = "Cost must be at least 1!"
+        return
+    }
+    addItem()
+}
+
 async function addItem() {
     try {
         const token = localStorage.getItem('token')
@@ -18,7 +30,7 @@ async function addItem() {
             return
         }
 
-        const response = await fetch("http://localhost:8081/add-purchase", {
+        const response = await fetch("http://localhost:8081/api/add-purchase", {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json", 
@@ -66,7 +78,7 @@ async function addItem() {
             <input v-model="image_url" type="text" placeholder="Image link (optional)" 
                    class="w-full p-2 border border-green-200 rounded outline-none focus:ring-2 focus:ring-green-400" />
             
-            <button @click="addItem" 
+            <button @click="validateBeforeAdd" 
                     class="w-full bg-green-500 text-white font-bold py-2 rounded shadow hover:bg-green-600 transition">
                 Save to List
             </button>

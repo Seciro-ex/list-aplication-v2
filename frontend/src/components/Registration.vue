@@ -8,9 +8,27 @@ const password = ref('')
 const email = ref('')
 const message = ref('')
 
+const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/
+
+async function handleValidation() {
+    if (username.value.length < 2) {
+        message.value = "Error! Username must be at least 2 symbols long!"
+        return
+    }
+    if (email.value.length < 2 || !emailRegex.test(email.value)) {
+        message.value = "Error! Please enter a valid email address."
+        return
+    }
+    if (password.value.length < 6) {
+        message.value = "Error! Password must be at least 6 symbols long!"
+        return
+    }
+    handleRegistration()
+}
+
 async function handleRegistration() {
     try {
-        const response = await fetch("http://localhost:8081/register", {
+        const response = await fetch("http://localhost:8081/api/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -28,7 +46,7 @@ async function handleRegistration() {
             message.value = "Error: " + (data.error || "cannot register.")
         }
     } catch (error) {
-        message.value = "Server doesn't respond"
+        message.value = "Server Error"
     }
 }
 </script>
@@ -37,7 +55,7 @@ async function handleRegistration() {
     <div class="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg">
         <h1 class="text-2xl font-bold mb-6 text-gray-800">Sign-up</h1>
         
-        <form @submit.prevent="handleRegistration" class="space-y-4">
+        <form @submit.prevent="handleValidation" class="space-y-4">
         <div>
             <label class="block text-sm font-medium text-gray-700">Username:</label>
             <input v-model="username" type="text" required

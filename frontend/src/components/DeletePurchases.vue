@@ -26,7 +26,7 @@ async function DeleteItem() {
         const token = localStorage.getItem('token')
         if (!token) return
 
-        const url = `http://localhost:8081/delete-purchase?id=${props.itemId}`
+        const url = `http://localhost:8081/api/delete-purchase?id=${props.itemId}`
 
         const response = await fetch(url, {
             method: "DELETE",
