@@ -251,7 +251,7 @@ func LoginHandler(conn *pgx.Conn) http.HandlerFunc {
 		secret := []byte(os.Getenv("JWT_SECRET"))
 		claims := jwt.MapClaims{
 			"user_id": userFromDB.ID,
-			"exp":     time.Now().Add(time.Hour * 24).Unix(), // Токен живет 24 часа
+			"exp":     time.Now().Add(time.Hour * 24).Unix(),
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

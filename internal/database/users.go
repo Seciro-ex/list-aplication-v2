@@ -21,13 +21,14 @@ func DeleteUserByID(conn *pgx.Conn, id int) error {
 func EditUser(conn *pgx.Conn, p models.User) error {
 	query := `
 		UPDATE users
-		SET username = $1, email = $2, password = $3
-		WHERE id = $4
+		SET username = $1, email = $2, password = $3, picture_url = $4
+		WHERE id = $5
 	`
 	_, err := conn.Exec(context.Background(), query,
 		p.Username,
 		p.Email,
 		p.Password,
+		p.PictureUrl,
 		p.ID,
 	)
 	return err
@@ -35,8 +36,8 @@ func EditUser(conn *pgx.Conn, p models.User) error {
 
 func SaveNewUser(conn *pgx.Conn, p models.User) error {
 	query := `
-		INSERT INTO users (username, email, password, created_at)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO users (username, email, password, created_at, picture_url)
+		VALUES ($1, $2, $3, $4, $5)
 	`
 	p.CreatedAt = time.Now()
 	_, err := conn.Exec(context.Background(), query,
@@ -44,6 +45,7 @@ func SaveNewUser(conn *pgx.Conn, p models.User) error {
 		p.Email,
 		p.Password,
 		p.CreatedAt,
+		"",
 	)
 	return err
 }
@@ -77,8 +79,8 @@ func GetUserByUsername(conn *pgx.Conn, username string) (models.User, error) {
 
 func GetUserByID(conn *pgx.Conn, userID int) (models.User, error) {
 	var u models.User
-	query := `SELECT id, username, email, created_at FROM users WHERE id = $1`
+	query := `SELECT id, username, picture_url, email, created_at FROM users WHERE id = $1`
 
-	err := conn.QueryRow(context.Background(), query, userID).Scan(&u.ID, &u.Username, &u.Email, &u.CreatedAt)
+	err := conn.QueryRow(context.Background(), query, userID).Scan(&u.ID, &u.Username, &u.PictureUrl, &u.Email, &u.CreatedAt)
 	return u, err
 }

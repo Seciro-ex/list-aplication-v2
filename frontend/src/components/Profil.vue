@@ -74,6 +74,9 @@ onMounted(() => {
                 <p class="text-sm text-gray-500">Created at</p>
                 <p class="text-lg font-mono text-gray-800">{{ formattedDate }}</p>
             </div>
+            <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <img :src="userInfo.picture_url" alt="img">
+            </div>
         </div>
 
         <div v-else-if="!message" class="text-center py-4">
@@ -89,7 +92,7 @@ onMounted(() => {
             <div class="flex gap-3">
                 <button class="w-full py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
                     Delete User
-                </button>
+                </button> 
             </div>
         </div>
 
