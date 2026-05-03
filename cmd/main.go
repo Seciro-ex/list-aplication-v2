@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 
@@ -61,11 +61,16 @@ func main() {
 		|        CONNECT TO DATABASE        |
 		└-----------------------------------┘
 	*/
-	conn, err := pgx.Connect(context.Background(), connStr)
+	dbpool, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
-		log.Fatalf("Can't to connect to database: %v\n", err)
+		log.Fatalf("Unable to create connection pool: %v\n", err)
 	}
-	defer conn.Close(context.Background())
+	defer dbpool.Close()
+
+	err = dbpool.Ping(context.Background())
+	if err != nil {
+		log.Fatalf("Could not ping database: %v\n", err)
+	}
 
 	fmt.Println("Succses to connect to PoostgreSQL!")
 
@@ -108,7 +113,7 @@ func main() {
 	*/
 
 	// ENDPOINT (/api/ping)
-	http.HandleFunc("/api/ping", DBping(conn))
+	http.HandleFunc("/api/ping", DBping(dbpool))
 
 	/*
 		┌-----------------------------------┐
@@ -117,16 +122,16 @@ func main() {
 	*/
 
 	// ENDPOINT (/api/login)
-	http.HandleFunc("/api/login", LoginHandler(conn))
+	http.HandleFunc("/api/login", LoginHandler(dbpool))
 
 	// ENDPOINT (/api/register)
-	http.HandleFunc("/api/register", RegisterHandler(conn))
+	http.HandleFunc("/api/register", RegisterHandler(dbpool))
 
 	// ENDPOINT (/api/edit-user)
-	http.HandleFunc("/api/edit-user", UserEditHandler(conn))
+	http.HandleFunc("/api/edit-user", UserEditHandler(dbpool))
 
 	// ENDPOINT (/api/delete-user)
-	http.HandleFunc("/api/delete-user", UserDeleteHandler(conn))
+	http.HandleFunc("/api/delete-user", UserDeleteHandler(dbpool))
 
 	/*
 		┌-----------------------------------┐
@@ -135,13 +140,13 @@ func main() {
 	*/
 
 	// ENDPOINT (/api/delete-purchase)
-	http.HandleFunc("/api/delete-purchase", PurchaseDeleteHandler(conn))
+	http.HandleFunc("/api/delete-purchase", PurchaseDeleteHandler(dbpool))
 
 	// ENDPOINT (/api/edit-purchase)
-	http.HandleFunc("/api/edit-purchase", PurchaseEditHandler(conn))
+	http.HandleFunc("/api/edit-purchase", PurchaseEditHandler(dbpool))
 
 	// ENDPOINT (/api/add-purchase)
-	http.HandleFunc("/api/add-purchase", PurchaseAddHandler(conn))
+	http.HandleFunc("/api/add-purchase", PurchaseAddHandler(dbpool))
 
 	/*
 		┌-----------------------------------┐
@@ -150,13 +155,13 @@ func main() {
 	*/
 
 	// ENDPOINT (/api/users)
-	http.HandleFunc("/api/users", UsersListHandler(conn))
+	http.HandleFunc("/api/users", UsersListHandler(dbpool))
 
 	// ENDPOINT (/api/user/purchases)
-	http.HandleFunc("/api/user/purchases", UserPurchasesListHandler(conn))
+	http.HandleFunc("/api/user/purchases", UserPurchasesListHandler(dbpool))
 
 	// ENDPOINT (/api/me)
-	http.HandleFunc("/api/me", GetCurrentUser(conn))
+	http.HandleFunc("/api/me", GetCurrentUser(dbpool))
 
 	/*
 		┌-----------------------------------┐
@@ -226,7 +231,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // @Param        input body models.User true "Данные для входа (username, password)"
 // @Success      200 {object} map[string]string "token: string"
 // @Router       /api/login [post]
-func LoginHandler(conn *pgx.Conn) http.HandlerFunc {
+func LoginHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input models.User
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -234,7 +239,7 @@ func LoginHandler(conn *pgx.Conn) http.HandlerFunc {
 			return
 		}
 
-		userFromDB, err := database.GetUserByUsername(conn, input.Username)
+		userFromDB, err := database.GetUserByUsername(r.Context(), db, input.Username)
 		if err != nil {
 			http.Error(w, "User not found or Access Denied", http.StatusUnauthorized)
 			return
@@ -275,7 +280,7 @@ func LoginHandler(conn *pgx.Conn) http.HandlerFunc {
 // @Success      201 {string} string "User added successfully!"
 // @Failure      400 {string} string "Validation failed / Invalid JSON"
 // @Router       /register [post]
-func RegisterHandler(conn *pgx.Conn) http.HandlerFunc {
+func RegisterHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var NewUser models.User
 
@@ -296,7 +301,7 @@ func RegisterHandler(conn *pgx.Conn) http.HandlerFunc {
 		}
 		NewUser.Password = string(hashedPassword)
 
-		err = database.SaveNewUser(conn, NewUser)
+		err = database.SaveNewUser(r.Context(), db, NewUser)
 		if err != nil {
 			log.Printf("Error on saving user: %v", err)
 			http.Error(w, "Can't save user", http.StatusInternalServerError)
@@ -318,7 +323,7 @@ func RegisterHandler(conn *pgx.Conn) http.HandlerFunc {
 // @Param        input body models.User true "Новые данные"
 // @Success      200 {string} string "User edit successfully!"
 // @Router       /edit-user [post]
-func UserEditHandler(conn *pgx.Conn) http.HandlerFunc {
+func UserEditHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		idStr := r.URL.Query().Get("id")
 		id, _ := strconv.Atoi(idStr)
@@ -336,7 +341,23 @@ func UserEditHandler(conn *pgx.Conn) http.HandlerFunc {
 		}
 		data.ID = id
 
-		err = database.EditUser(conn, data)
+		if data.Password != "" {
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(data.Password), 14)
+			if err != nil {
+				http.Error(w, "Security error", http.StatusInternalServerError)
+				return
+			}
+			data.Password = string(hashedPassword)
+		} else {
+			currentUser, err := database.GetUserByID(r.Context(), db, id)
+			if err != nil {
+				http.Error(w, "User not found", http.StatusNotFound)
+				return
+			}
+			data.Password = currentUser.Password
+		}
+
+		err = database.EditUser(r.Context(), db, data)
 		if err != nil {
 			http.Error(w, "Update failed", 500)
 			return
@@ -354,7 +375,7 @@ func UserEditHandler(conn *pgx.Conn) http.HandlerFunc {
 // @Param        id query int true "User ID"
 // @Success      200 {string} string "User deleted successfully!"
 // @Router       /delete-user [delete]
-func UserDeleteHandler(conn *pgx.Conn) http.HandlerFunc {
+func UserDeleteHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		trustedID := r.Context().Value("userID").(int)
 
@@ -374,7 +395,7 @@ func UserDeleteHandler(conn *pgx.Conn) http.HandlerFunc {
 			return
 		}
 
-		err = database.DeleteUserByID(conn, id)
+		err = database.DeleteUserByID(r.Context(), db, id)
 		if err != nil {
 			log.Printf("Error deleting user: %v", err)
 			http.Error(w, "Can't delete user", http.StatusInternalServerError)
@@ -392,7 +413,7 @@ func UserDeleteHandler(conn *pgx.Conn) http.HandlerFunc {
 // @Produce      plain
 // @Success      200 {string} string "Database connection is alive!"
 // @Router       /ping [get]
-func DBping(conn *pgx.Conn) http.HandlerFunc {
+func DBping(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Database connection is alive!")
 	}
@@ -407,7 +428,7 @@ func DBping(conn *pgx.Conn) http.HandlerFunc {
 // @Param        input body models.Purchase true "Данные покупки"
 // @Success      201 {string} string "Purchase added successfully!"
 // @Router       /add-purchase [post]
-func PurchaseAddHandler(conn *pgx.Conn) http.HandlerFunc {
+func PurchaseAddHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		var NewItem models.Purchase
 
@@ -426,7 +447,7 @@ func PurchaseAddHandler(conn *pgx.Conn) http.HandlerFunc {
 
 		NewItem.UserID = trustedUserID
 
-		err = database.SavePurchase(conn, NewItem)
+		err = database.SavePurchase(r.Context(), db, NewItem)
 		if err != nil {
 			log.Printf("Error on saving: %v", err)
 			http.Error(w, "Can't save item", http.StatusInternalServerError)
@@ -446,7 +467,7 @@ func PurchaseAddHandler(conn *pgx.Conn) http.HandlerFunc {
 // @Param        id query int true "Purchase ID"
 // @Success      200 {string} string "Purchase deleted successfully!"
 // @Router       /delete-purchase [delete]
-func PurchaseDeleteHandler(conn *pgx.Conn) http.HandlerFunc {
+func PurchaseDeleteHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		trustedID := r.Context().Value("userID").(int)
 
@@ -462,7 +483,7 @@ func PurchaseDeleteHandler(conn *pgx.Conn) http.HandlerFunc {
 			return
 		}
 
-		err = database.DeletePurchaseByID(conn, id, trustedID)
+		err = database.DeletePurchaseByID(r.Context(), db, id, trustedID)
 		if err != nil {
 			log.Printf("Error on deleting: %v", err)
 			http.Error(w, "Can't delete purchase", http.StatusInternalServerError)
@@ -484,7 +505,7 @@ func PurchaseDeleteHandler(conn *pgx.Conn) http.HandlerFunc {
 // @Param        input body models.Purchase true "Новые данные покупки"
 // @Success      200 {string} string "Purchase edit successfully!"
 // @Router       /edit-purchase [post]
-func PurchaseEditHandler(conn *pgx.Conn) http.HandlerFunc {
+func PurchaseEditHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		idStr := r.URL.Query().Get("id")
 		id, err := strconv.Atoi(idStr)
@@ -505,7 +526,7 @@ func PurchaseEditHandler(conn *pgx.Conn) http.HandlerFunc {
 		trustedID := r.Context().Value("userID").(int)
 		EditedPurchase.UserID = trustedID
 
-		err = database.EditPurchase(conn, EditedPurchase)
+		err = database.EditPurchase(r.Context(), db, EditedPurchase)
 		if err != nil {
 			log.Printf("Edit error: %v", err)
 			http.Error(w, "Update failed: item not found or access denied", http.StatusForbidden)
@@ -523,9 +544,9 @@ func PurchaseEditHandler(conn *pgx.Conn) http.HandlerFunc {
 // @Produce      json
 // @Success      200 {array} models.User
 // @Router       /users [get]
-func UsersListHandler(conn *pgx.Conn) http.HandlerFunc {
+func UsersListHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		list, err := database.GetAllUsers(conn)
+		list, err := database.GetAllUsers(r.Context(), db)
 		if err != nil {
 			http.Error(w, "DB error", http.StatusInternalServerError)
 			return
@@ -543,10 +564,10 @@ func UsersListHandler(conn *pgx.Conn) http.HandlerFunc {
 // @Security     BearerAuth
 // @Success      200 {array} models.Purchase
 // @Router       /user/purchases [get]
-func UserPurchasesListHandler(conn *pgx.Conn) http.HandlerFunc {
+func UserPurchasesListHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		trustedUserID := r.Context().Value("userID").(int)
-		list, err := database.GetPurchasesByID(conn, trustedUserID)
+		list, err := database.GetPurchasesByID(r.Context(), db, trustedUserID)
 		if err != nil {
 			http.Error(w, "DB error", http.StatusInternalServerError)
 			return
@@ -556,16 +577,18 @@ func UserPurchasesListHandler(conn *pgx.Conn) http.HandlerFunc {
 	})
 }
 
-func GetCurrentUser(conn *pgx.Conn) http.HandlerFunc {
+func GetCurrentUser(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value("userID").(int)
 		if !ok {
 			http.Error(w, "Internal Server Error: context userID not found", http.StatusInternalServerError)
 			return
 		}
-		user, err := database.GetUserByID(conn, userID)
+		ctx := r.Context()
+
+		user, err := database.GetUserByID(ctx, db, userID)
 		if err != nil {
-			log.Printf("Error fetching current user: %v", err)
+			log.Printf("Error: %v", err)
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
 		}

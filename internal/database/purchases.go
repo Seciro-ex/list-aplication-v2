@@ -5,25 +5,25 @@ import (
 	"list-application-v2/internal/models"
 	"log"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func DeletePurchaseByID(conn *pgx.Conn, id int, userID int) error {
+func DeletePurchaseByID(ctx context.Context, db *pgxpool.Pool, id int, userID int) error {
 	query := `
 		DELETE FROM purchases
 		WHERE id = $1 AND user_id = $2
 	`
-	_, err := conn.Exec(context.Background(), query, id, userID)
+	_, err := db.Exec(ctx, query, id, userID)
 	return err
 }
 
-func EditPurchase(conn *pgx.Conn, p models.Purchase) error {
+func EditPurchase(ctx context.Context, db *pgxpool.Pool, p models.Purchase) error {
 	query := `
 		UPDATE purchases
 		SET image_url = $1, cost = $2, item_url = $3, item_name = $4
 		WHERE id = $5 AND user_id = $6
 	`
-	_, err := conn.Exec(context.Background(), query,
+	_, err := db.Exec(ctx, query,
 		p.ImageURL,
 		p.Cost,
 		p.ItemURL,
@@ -34,12 +34,12 @@ func EditPurchase(conn *pgx.Conn, p models.Purchase) error {
 	return err
 }
 
-func SavePurchase(conn *pgx.Conn, p models.Purchase) error {
+func SavePurchase(ctx context.Context, db *pgxpool.Pool, p models.Purchase) error {
 	query := `
 		INSERT INTO purchases (image_url, cost, item_url, item_name, user_id)
 		VALUES ($1, $2, $3, $4, $5)
 	`
-	_, err := conn.Exec(context.Background(), query,
+	_, err := db.Exec(ctx, query,
 		p.ImageURL,
 		p.Cost,
 		p.ItemURL,
@@ -49,8 +49,8 @@ func SavePurchase(conn *pgx.Conn, p models.Purchase) error {
 	return err
 }
 
-func GetAllPurchases(conn *pgx.Conn) ([]models.Purchase, error) {
-	rows, err := conn.Query(context.Background(), "SELECT id, item_name, cost, item_url FROM purchases")
+func GetAllPurchases(ctx context.Context, db *pgxpool.Pool) ([]models.Purchase, error) {
+	rows, err := db.Query(ctx, "SELECT id, item_name, cost, item_url FROM purchases")
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +68,8 @@ func GetAllPurchases(conn *pgx.Conn) ([]models.Purchase, error) {
 	return results, nil
 }
 
-func GetPurchasesByID(conn *pgx.Conn, id int) ([]models.Purchase, error) {
-	rows, err := conn.Query(context.Background(), "SELECT id, user_id, item_name, cost, item_url, image_url FROM purchases WHERE user_id = $1", id)
+func GetPurchasesByID(ctx context.Context, db *pgxpool.Pool, id int) ([]models.Purchase, error) {
+	rows, err := db.Query(ctx, "SELECT id, user_id, item_name, cost, item_url, image_url FROM purchases WHERE user_id = $1", id)
 	if err != nil {
 		log.Printf("Query error: %v", err)
 		return nil, err

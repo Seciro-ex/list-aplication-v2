@@ -3,11 +3,14 @@ import { ref, onMounted, computed } from 'vue'
 import AddPurchases from './AddPurchases.vue'
 import DeletePurchases from './DeletePurchases.vue'
 import EditPurchases from './EditPurchases.vue'
+import Profil from './Profil.vue'
 
 const emit = defineEmits(['logout', 'profile'])
 
 const message = ref('')
 const purchases = ref([])
+const profile_url = ref('')
+
 const isFormVisible = ref(false)
 const itemToDeleteId = ref(null)
 const itemToEditId = ref(null)
@@ -22,6 +25,32 @@ const totalPrice = computed(() => {
 const bgColors = ['bg-red-400', 'bg-blue-400', 'bg-green-400', 'bg-yellow-400', 'bg-purple-400', 'bg-pink-400']
 const getRandomColor = (id) => {
     return bgColors[id % bgColors.length]
+}
+async function GetProfilePick() {
+    try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+            emit('logout')
+            return
+        }
+
+        const response = await fetch("http://localhost:8081/api/me", {
+            method: "GET",
+            headers: { 
+                "Content-Type": "application/json", 
+                "Authorization": `Bearer ${token}`
+            },
+        })
+
+        if (response.ok) {
+            const data = await response.json()
+            profile_url.value = data.picture_url || ""
+        } else {
+            message.value = "Error when loading a list"
+        }
+    } catch (error) {
+        message.value = error
+    }
 }
 
 async function loadPurchases() {
@@ -77,6 +106,7 @@ function handlePurchasesEdit() {
 
 onMounted(() => {
     loadPurchases()
+    GetProfilePick()
 })
 </script>
 
@@ -84,7 +114,16 @@ onMounted(() => {
 <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
         <div class="flex justify-between items-center mb-4 border-b pb-4">
             <h1 class="text-2xl font-bold text-gray-800">My Shoping List</h1>
-            <div @click="emit('profile')" class="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl bg-pink-100 uppercase shadow-sm hover:bg-red-100">
+            <div @click="emit('profile')" class="cursor-pointer">
+                <img v-if="profile_url" 
+                    :src="profile_url" 
+                    class="w-16 h-16 rounded-full object-cover shadow-sm border border-gray-200 hover:scale-105 transition" 
+                    alt="Profile">
+                
+                <div v-else 
+                    class="w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-sm hover:bg-indigo-600 transition">
+                    U
+                </div>
             </div>
         </div>
 
