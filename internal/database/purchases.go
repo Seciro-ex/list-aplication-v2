@@ -20,14 +20,15 @@ func DeletePurchaseByID(ctx context.Context, db *pgxpool.Pool, id int, userID in
 func EditPurchase(ctx context.Context, db *pgxpool.Pool, p models.Purchase) error {
 	query := `
 		UPDATE purchases
-		SET image_url = $1, cost = $2, item_url = $3, item_name = $4
-		WHERE id = $5 AND user_id = $6
+		SET image_url = $1, cost = $2, item_url = $3, item_name = $4, item_description = $5
+		WHERE id = $6 AND user_id = $7
 	`
 	_, err := db.Exec(ctx, query,
 		p.ImageURL,
 		p.Cost,
 		p.ItemURL,
 		p.ItemName,
+		p.ItemDescription,
 		p.ID,
 		p.UserID,
 	)
@@ -36,14 +37,15 @@ func EditPurchase(ctx context.Context, db *pgxpool.Pool, p models.Purchase) erro
 
 func SavePurchase(ctx context.Context, db *pgxpool.Pool, p models.Purchase) error {
 	query := `
-		INSERT INTO purchases (image_url, cost, item_url, item_name, user_id)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO purchases (image_url, cost, item_url, item_name, item_description, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 	_, err := db.Exec(ctx, query,
 		p.ImageURL,
 		p.Cost,
 		p.ItemURL,
 		p.ItemName,
+		p.ItemDescription,
 		p.UserID,
 	)
 	return err
@@ -69,7 +71,7 @@ func GetAllPurchases(ctx context.Context, db *pgxpool.Pool) ([]models.Purchase, 
 }
 
 func GetPurchasesByID(ctx context.Context, db *pgxpool.Pool, id int) ([]models.Purchase, error) {
-	rows, err := db.Query(ctx, "SELECT id, user_id, item_name, cost, item_url, image_url FROM purchases WHERE user_id = $1", id)
+	rows, err := db.Query(ctx, "SELECT id, user_id, item_name, cost, item_url, item_description, image_url FROM purchases WHERE user_id = $1", id)
 	if err != nil {
 		log.Printf("Query error: %v", err)
 		return nil, err
@@ -79,7 +81,7 @@ func GetPurchasesByID(ctx context.Context, db *pgxpool.Pool, id int) ([]models.P
 	var results []models.Purchase
 	for rows.Next() {
 		var p models.Purchase
-		err := rows.Scan(&p.ID, &p.UserID, &p.ItemName, &p.Cost, &p.ItemURL, &p.ImageURL)
+		err := rows.Scan(&p.ID, &p.UserID, &p.ItemName, &p.Cost, &p.ItemURL, &p.ItemDescription, &p.ImageURL)
 		if err != nil {
 			log.Printf("Scan error: %v", err)
 			return nil, err

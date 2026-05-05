@@ -1,12 +1,13 @@
 <script setup>
 import { ref } from 'vue'
 
-const props = defineProps(['itemId', 'cost', 'image_url', 'item_name', 'item_url'])
+const props = defineProps(['itemId', 'cost', 'image_url', 'item_name', 'item_url', 'item_description'])
 const emit = defineEmits(['item-edited', 'cancel'])
 const item_name = ref(props.item_name || '')
 const cost = ref(props.cost || 0)
 const item_url = ref(props.item_url || '')
 const image_url = ref(props.image_url || '')
+const item_description  = ref(props.item_description || '')
 
 const message = ref('')
 
@@ -40,7 +41,8 @@ async function EditItem() {
             cost: cost.value,
             image_url: image_url.value,
             item_name: item_name.value,
-            item_url: item_url.value
+            item_url: item_url.value,
+            item_description: item_description.value
         })
     })
     if (response.ok) {
@@ -70,6 +72,9 @@ async function EditItem() {
                    class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
             
             <input v-model="image_url" type="text" placeholder="Image link (optional)"
+                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+            
+            <input v-model="item_description" type="text" placeholder="Item description(optional)"
                    class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
             
             <button @click="validateBeforeEdit" 

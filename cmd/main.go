@@ -189,7 +189,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenStr := r.Header.Get("Authorization")
 		if tokenStr == "" {
-			http.Error(w, "Missing token", http.StatusUnauthorized)
+			SendError(w, http.StatusUnauthorized, "Missing token")
 			return
 		}
 
@@ -200,7 +200,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			SendError(w, http.StatusUnauthorized, "Invalid token")
 			return
 		}
 
@@ -211,7 +211,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		} else {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+			SendError(w, http.StatusUnauthorized, "Invalid token claims")
 			return
 		}
 	}
@@ -235,20 +235,20 @@ func LoginHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input models.User
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
 		userFromDB, err := database.GetUserByUsername(r.Context(), db, input.Username)
 		if err != nil {
-			http.Error(w, "User not found or Access Denied", http.StatusUnauthorized)
+			SendError(w, http.StatusUnauthorized, "User not found or Access Denied")
 			return
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(userFromDB.Password), []byte(input.Password))
 		if err != nil {
 			log.Printf("Wrong password for user %s", input.Username)
-			http.Error(w, "Access Denied", http.StatusUnauthorized)
+			SendError(w, http.StatusUnauthorized, "Access Denied")
 			return
 		}
 
@@ -262,7 +262,7 @@ func LoginHandler(db *pgxpool.Pool) http.HandlerFunc {
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 		tokenString, err := token.SignedString(secret)
 		if err != nil {
-			http.Error(w, "Could not create token", http.StatusInternalServerError)
+			SendError(w, http.StatusInternalServerError, "Could not create token")
 			return
 		}
 
@@ -286,17 +286,17 @@ func RegisterHandler(db *pgxpool.Pool) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&NewUser)
 		if err != nil {
-			http.Error(w, "Bad reqyest: invalid JSON", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Bad request: invalid JSON")
 			return
 		}
 		if err := validate.Struct(NewUser); err != nil {
-			http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Validation failed: "+err.Error())
 			return
 		}
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(NewUser.Password), 14)
 		if err != nil {
-			http.Error(w, "Ошибка безопасности", 500)
+			SendError(w, http.StatusInternalServerError, "Security error")
 			return
 		}
 		NewUser.Password = string(hashedPassword)
@@ -304,12 +304,11 @@ func RegisterHandler(db *pgxpool.Pool) http.HandlerFunc {
 		err = database.SaveNewUser(r.Context(), db, NewUser)
 		if err != nil {
 			log.Printf("Error on saving user: %v", err)
-			http.Error(w, "Can't save user", http.StatusInternalServerError)
+			SendError(w, http.StatusInternalServerError, "Can't save user")
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		fmt.Fprint(w, "User added successfully!")
+		SendJSON(w, http.StatusOK, map[string]string{"message": "User added successfully!"})
 	}
 }
 
@@ -326,17 +325,25 @@ func RegisterHandler(db *pgxpool.Pool) http.HandlerFunc {
 func UserEditHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		idStr := r.URL.Query().Get("id")
-		id, _ := strconv.Atoi(idStr)
-		trustedID := r.Context().Value("userID").(int)
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			SendError(w, http.StatusBadRequest, "Invalid user ID format")
+			return
+		}
+		trustedID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			SendError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
 		if trustedID != id {
-			http.Error(w, "Don't match the user ID", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Don't match the user ID")
 			return
 		}
 
 		var data models.User
-		err := json.NewDecoder(r.Body).Decode(&data)
+		err = json.NewDecoder(r.Body).Decode(&data)
 		if err != nil {
-			http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Bad request: invalid JSON")
 			return
 		}
 		data.ID = id
@@ -344,14 +351,14 @@ func UserEditHandler(db *pgxpool.Pool) http.HandlerFunc {
 		if data.Password != "" {
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(data.Password), 14)
 			if err != nil {
-				http.Error(w, "Security error", http.StatusInternalServerError)
+				SendError(w, http.StatusInternalServerError, "Security error")
 				return
 			}
 			data.Password = string(hashedPassword)
 		} else {
 			currentUser, err := database.GetUserByID(r.Context(), db, id)
 			if err != nil {
-				http.Error(w, "User not found", http.StatusNotFound)
+				SendError(w, http.StatusNotFound, "User not found")
 				return
 			}
 			data.Password = currentUser.Password
@@ -359,11 +366,11 @@ func UserEditHandler(db *pgxpool.Pool) http.HandlerFunc {
 
 		err = database.EditUser(r.Context(), db, data)
 		if err != nil {
-			http.Error(w, "Update failed", 500)
+			SendError(w, http.StatusInternalServerError, "Update failed")
 			return
 		}
 
-		fmt.Fprint(w, "User edit successfully!")
+		SendJSON(w, http.StatusOK, map[string]string{"message": "User edit successfully!"})
 	})
 }
 
@@ -381,29 +388,28 @@ func UserDeleteHandler(db *pgxpool.Pool) http.HandlerFunc {
 
 		idStr := r.URL.Query().Get("id")
 		if idStr == "" {
-			http.Error(w, "Bad request: missing user ID", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Bad request: missing user ID")
 			return
 		}
 
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			http.Error(w, "Invalid id format", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Invalid id format")
 			return
 		}
 		if trustedID != id {
-			http.Error(w, "Don't match the user ID", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Don't match the user ID")
 			return
 		}
 
 		err = database.DeleteUserByID(r.Context(), db, id)
 		if err != nil {
 			log.Printf("Error deleting user: %v", err)
-			http.Error(w, "Can't delete user", http.StatusInternalServerError)
+			SendError(w, http.StatusInternalServerError, "Can't delete user")
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "User deleted successfully!")
+		SendJSON(w, http.StatusOK, map[string]string{"message": "User deleted successfully!"})
 	})
 }
 
@@ -415,7 +421,7 @@ func UserDeleteHandler(db *pgxpool.Pool) http.HandlerFunc {
 // @Router       /ping [get]
 func DBping(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Database connection is alive!")
+		SendJSON(w, http.StatusOK, map[string]string{"message": "Database connection is alive!"})
 	}
 }
 
@@ -434,28 +440,31 @@ func PurchaseAddHandler(db *pgxpool.Pool) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&NewItem)
 		if err != nil {
-			http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Bad request: invalid JSON")
 			return
 		}
 
 		if err := validate.Struct(NewItem); err != nil {
-			http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Validation failed", err.Error())
 			return
 		}
 
-		trustedUserID := r.Context().Value("userID").(int)
+		trustedUserID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			SendError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
 
 		NewItem.UserID = trustedUserID
 
 		err = database.SavePurchase(r.Context(), db, NewItem)
 		if err != nil {
 			log.Printf("Error on saving: %v", err)
-			http.Error(w, "Can't save item", http.StatusInternalServerError)
+			SendError(w, http.StatusInternalServerError, "Can't save item")
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		fmt.Fprint(w, "Purchase added successfully!")
+		SendJSON(w, http.StatusCreated, map[string]string{"message": "Purchase added successfully!"})
 	})
 }
 
@@ -469,29 +478,32 @@ func PurchaseAddHandler(db *pgxpool.Pool) http.HandlerFunc {
 // @Router       /delete-purchase [delete]
 func PurchaseDeleteHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		trustedID := r.Context().Value("userID").(int)
+		trustedID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			SendError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
 
 		idStr := r.URL.Query().Get("id")
 		if idStr == "" {
-			http.Error(w, "Bad request: missing purchase ID", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Bad request: missing purchase ID")
 			return
 		}
 
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			http.Error(w, "Invalid id format", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Invalid id format")
 			return
 		}
 
 		err = database.DeletePurchaseByID(r.Context(), db, id, trustedID)
 		if err != nil {
 			log.Printf("Error on deleting: %v", err)
-			http.Error(w, "Can't delete purchase", http.StatusInternalServerError)
+			SendError(w, http.StatusInternalServerError, "Can't delete purchase")
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "Purchase deleted successfully!")
+		SendJSON(w, http.StatusOK, map[string]string{"message": "Purchase deleted successfully!"})
 	})
 }
 
@@ -510,7 +522,7 @@ func PurchaseEditHandler(db *pgxpool.Pool) http.HandlerFunc {
 		idStr := r.URL.Query().Get("id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			http.Error(w, "Invalid purchase ID", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Invalid purchase ID")
 			return
 		}
 
@@ -518,23 +530,26 @@ func PurchaseEditHandler(db *pgxpool.Pool) http.HandlerFunc {
 
 		err = json.NewDecoder(r.Body).Decode(&EditedPurchase)
 		if err != nil {
-			http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
+			SendError(w, http.StatusBadRequest, "Bad request: invalid JSON")
 			return
 		}
 		EditedPurchase.ID = id
 
-		trustedID := r.Context().Value("userID").(int)
+		trustedID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			SendError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
 		EditedPurchase.UserID = trustedID
 
 		err = database.EditPurchase(r.Context(), db, EditedPurchase)
 		if err != nil {
 			log.Printf("Edit error: %v", err)
-			http.Error(w, "Update failed: item not found or access denied", http.StatusForbidden)
+			SendError(w, http.StatusForbidden, "Update failed: item not found or access denied")
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "Purchase edit successfully!")
+		SendJSON(w, http.StatusOK, map[string]string{"message": "Purchase edit successfully!"})
 	})
 }
 
@@ -548,12 +563,11 @@ func UsersListHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		list, err := database.GetAllUsers(r.Context(), db)
 		if err != nil {
-			http.Error(w, "DB error", http.StatusInternalServerError)
+			SendError(w, http.StatusInternalServerError, "DB error")
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(list)
+		SendJSON(w, http.StatusOK, list)
 	}
 }
 
@@ -566,14 +580,18 @@ func UsersListHandler(db *pgxpool.Pool) http.HandlerFunc {
 // @Router       /user/purchases [get]
 func UserPurchasesListHandler(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		trustedUserID := r.Context().Value("userID").(int)
-		list, err := database.GetPurchasesByID(r.Context(), db, trustedUserID)
-		if err != nil {
-			http.Error(w, "DB error", http.StatusInternalServerError)
+		trustedUserID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			SendError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(list)
+		list, err := database.GetPurchasesByID(r.Context(), db, trustedUserID)
+		if err != nil {
+			SendError(w, http.StatusInternalServerError, "DB error")
+			return
+		}
+
+		SendJSON(w, http.StatusOK, list)
 	})
 }
 
@@ -581,7 +599,7 @@ func GetCurrentUser(db *pgxpool.Pool) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value("userID").(int)
 		if !ok {
-			http.Error(w, "Internal Server Error: context userID not found", http.StatusInternalServerError)
+			SendError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
 		ctx := r.Context()
@@ -589,7 +607,7 @@ func GetCurrentUser(db *pgxpool.Pool) http.HandlerFunc {
 		user, err := database.GetUserByID(ctx, db, userID)
 		if err != nil {
 			log.Printf("Error: %v", err)
-			http.Error(w, "User not found", http.StatusNotFound)
+			SendError(w, http.StatusNotFound, "User not found")
 			return
 		}
 
@@ -597,7 +615,7 @@ func GetCurrentUser(db *pgxpool.Pool) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(user); err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			SendError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 	})
@@ -615,4 +633,34 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+/*
+┌-----------------------------------┐
+|          Error Handling           |
+└-----------------------------------┘
+*/
+type APIError struct {
+	Error   string `json:"error"`
+	Details string `json:"details,omitempty"`
+}
+
+func SendError(w http.ResponseWriter, statusCode int, message string, details ...string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	resp := APIError{Error: message}
+	if len(details) > 0 {
+		resp.Details = details[0]
+	}
+
+	json.NewEncoder(w).Encode(resp)
+}
+
+func SendJSON(w http.ResponseWriter, statusCode int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	if data != nil {
+		json.NewEncoder(w).Encode(data)
+	}
 }

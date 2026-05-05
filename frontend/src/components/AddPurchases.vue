@@ -7,6 +7,7 @@ const cost = ref(0)
 const image_url = ref('')
 const item_name = ref('')
 const item_url = ref('')
+const item_description = ref('')
 const message = ref('')
 
 async function validateBeforeAdd() {
@@ -40,7 +41,8 @@ async function addItem() {
                 cost: cost.value,
                 image_url: image_url.value,
                 item_name: item_name.value,
-                item_url: item_url.value
+                item_url: item_url.value,
+                item_description: item_description.value
             })
         })
 
@@ -49,6 +51,7 @@ async function addItem() {
             cost.value = 0
             item_url.value = ''
             image_url.value = ''
+            item_description.value = ''
             message.value = "Item added succsesful!"
             emit('added-item')
         } else {
@@ -76,6 +79,9 @@ async function addItem() {
                    class="w-full p-2 border border-green-200 rounded outline-none focus:ring-2 focus:ring-green-400" />
             
             <input v-model="image_url" type="text" placeholder="Image link (optional)" 
+                   class="w-full p-2 border border-green-200 rounded outline-none focus:ring-2 focus:ring-green-400" />
+            
+            <input v-model="item_description" type="textbox" placeholder="Purchases description(optional)" 
                    class="w-full p-2 border border-green-200 rounded outline-none focus:ring-2 focus:ring-green-400" />
             
             <button @click="validateBeforeAdd" 

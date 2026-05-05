@@ -10,15 +10,31 @@ const emit = defineEmits(['logout', 'profile'])
 const message = ref('')
 const purchases = ref([])
 const profile_url = ref('')
+const search = ref('')
 
 const isFormVisible = ref(false)
 const itemToDeleteId = ref(null)
 const itemToEditId = ref(null)
 const ProfilOpen = ref(false)
 
+const filteredPurchases = computed(() => {
+    if (!search.value.trim()) {
+        return purchases.value
+    }
+    
+    const query = search.value.toLowerCase()
+    
+    return purchases.value.filter(item => {
+        const nameMatch = item.item_name?.toLowerCase().includes(query)
+        const descMatch = item.item_description?.toLowerCase().includes(query)
+        
+        return nameMatch || descMatch
+    })
+})
+
 const totalPrice = computed(() => {
-    return purchases.value.reduce((sum, item) => {
-        return  sum + Number(item.cost || 0)
+    return filteredPurchases.value.reduce((sum, item) => {
+        return sum + Number(item.cost || 0)
     }, 0)
 })
 
@@ -139,43 +155,43 @@ onMounted(() => {
         </div>
         <AddPurchases v-if="isFormVisible" @added-item="handlePurchaseAdded" />
 
-        <div class="flex justify-end p-4 bg-gray-50 rounded-lg shadow-sm mb-4">
-            <h1>Total price: {{ totalPrice }} €</h1>
+        <div class="flex justify-between p-4 bg-gray-50 rounded-lg shadow-sm mb-4">
+            <input v-model="search" type="text" placeholder="Search" class=" p-2 border border-gray-80 rounded outline-none focus:ring-2 focus:ring-gray-200">
+            <h1 class="flex mt-auto mb-auto">Total price: {{ totalPrice }} €</h1>
         </div>
 
         <div class="space-y-4">
-            <div v-for="item in purchases" :key="item.id">
+            <div v-for="item in filteredPurchases" :key="item.id">
                 
                 <div v-if="itemToEditId !== item.id" 
-                    class="flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                    class="group relative flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
                     
-                    <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-4 w-full">
+                        <div class="flex items-center gap-6 w-full">
                             <div class="w-32 h-20 shrink-0 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center p-2 overflow-hidden shadow-sm">
-                                
-                                <img v-if="item.image_url" 
-                                    :src="item.image_url" 
-                                    @error="item.image_url = ''"
-                                    alt="item" 
-                                    class="w-full h-full object-contain" 
-                                >
-                                <div v-else 
-                                    :class="['w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-xl uppercase', getRandomColor(item.id)]">
+                                <img v-if="item.image_url" :src="item.image_url" alt="item" class="w-full h-full object-contain">
+                                <div v-else :class="['w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-xl uppercase', getRandomColor(item.id)]">
                                     {{ item.item_name[0] }}
                                 </div>
                             </div>
 
                             <div class="grow min-w-0">
-                                <p class="font-bold text-gray-900 text-lg truncate">{{ item.item_name }}</p>
-                                
+                                <p class="font-bold text-gray-900 text-lg truncate">
+                                    {{ item.item_name }}
+                                </p>
+
                                 <a v-if="item.item_url" :href="item.item_url" target="_blank" class="text-xs text-blue-500 hover:underline block mb-2">
                                     Go to shop
                                 </a>
 
                                 <div class="flex items-center gap-2">
                                     <template v-if="itemToDeleteId !== item.id">
-                                        <button @click="itemToEditId = item.id" class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded uppercase font-bold hover:bg-orange-200">Edit</button>
-                                        <button @click="itemToDeleteId = item.id" class="text-[10px] bg-red-100 text-red-700 px-2 py-1 rounded uppercase font-bold hover:bg-red-200">Delete</button>
+                                        <button @click="itemToEditId = item.id" class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded uppercase font-bold hover:bg-orange-200">
+                                            Edit
+                                        </button>
+                                        <button @click="itemToDeleteId = item.id" class="text-[10px] bg-red-100 text-red-700 px-2 py-1 rounded uppercase font-bold hover:bg-red-200">
+                                            Delete
+                                        </button>
                                     </template>
                                     <div>
                                         <div class=" flex items-center gap-2">
@@ -188,6 +204,10 @@ onMounted(() => {
                                         </div>
                                     </div>
                                 </div>
+                                <p v-if="item.item_description" 
+                                    class="text-sm text-gray-500 mt-1 max-h-0 overflow-hidden group-hover:max-h-20 transition-all duration-500">
+                                    {{ item.item_description }}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -196,7 +216,7 @@ onMounted(() => {
                         {{ item.cost }} €
                     </div>
                 </div>
-
+                    
                 
                 <EditPurchases 
                     v-if="itemToEditId === item.id"
@@ -205,6 +225,7 @@ onMounted(() => {
                     :image_url="item.image_url"
                     :item_name="item.item_name"
                     :item_url="item.item_url"
+                    :item_description="item.item_description"
                     @item-edited="handlePurchasesEdit"
                     @cancel="itemToEditId = null"
                 />
@@ -212,6 +233,9 @@ onMounted(() => {
             </div>
             <div v-if="purchases.length === 0 && !message" class="text-center text-gray-500 py-8">
                 Your list is empty. Time to add something!
+            </div>
+            <div v-if="filteredPurchases.length === 0 && search" class="text-center text-gray-500 py-8">
+                Nothing found for "{{ search }}"
             </div>
         </div>
     </div>

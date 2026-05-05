@@ -76,7 +76,7 @@ onMounted(() => {
             <h2 class="text-xl font-bold mb-4 text-gray-800">User Profile</h2>
             
             <div class="bg-white rounded-lg flex items-center justify-center">
-                <img class="mb-4 w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-xl bg-pink-100 uppercase shadow-sm hover:scale-125 transition-all" :src="userInfo.picture_url" alt="img">
+                <img class="mb-4 w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-xl bg-indigo-500 uppercase shadow-sm hover:scale-125 transition-all" :src="userInfo.picture_url" alt="U">
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
