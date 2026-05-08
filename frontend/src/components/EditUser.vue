@@ -71,11 +71,16 @@ async function EditUser() {
             password: password.value
         })
     })
+
+    const data = await response.json()
+
     if (response.ok) {
         emit('user-edited')
     } else {
-        const errorText = await response.text()
-        message.value = "Error: " + errorText
+        message.value = data.error
+        if (data.details) {
+            console.error("Tech details:", data.details)
+        }
     }
 
     } catch (error) {

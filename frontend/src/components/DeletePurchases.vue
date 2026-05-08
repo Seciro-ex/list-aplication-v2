@@ -35,11 +35,15 @@ async function DeleteItem() {
             }
         })
 
+        const data = await response.json()
+
         if (response.ok) {
             emit('item-deleted')
         } else {
-            const errorText = await response.text()
-            message.value = "Error: " + errorText
+            message.value = "Error: " + data.error
+            if (data.details) {
+                console.error("Tech details:", data.details)
+            }
         }
     } catch (error) {
         message.value = "Server error"

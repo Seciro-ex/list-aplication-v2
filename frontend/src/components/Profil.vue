@@ -37,11 +37,15 @@ async function handleProfilInfo() {
             },
         })
 
+        const data = await response.json()
+
         if (response.ok) {
-            const data = await response.json()
             userInfo.value = data || []
         } else {
-            message.value = "Error when loading a list"
+            message.value = data.error || "Error when loading profile"
+            if (data.details) {
+                console.error("Tech details:", data.details)
+            }
         }
     } catch (error) {
         message.value = error

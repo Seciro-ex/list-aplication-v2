@@ -38,12 +38,16 @@ async function handleRegistration() {
             })
         })
 
+        const data = await response.json()
+
         if (response.ok) {
-            message.value = "Success registration! Now login."
+            message.value = data.message
             setTimeout(() => emit('go-to-login'), 2000)
         } else {
-            const data = await response.json()
-            message.value = "Error: " + (data.error || "cannot register.")
+            message.value = data.error || "Unknow error"
+            if (data.details) {
+                console.error("Tech details:", data.details)
+            }
         }
     } catch (error) {
         message.value = "Server Error"

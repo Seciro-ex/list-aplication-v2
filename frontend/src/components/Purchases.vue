@@ -18,18 +18,17 @@ const itemToEditId = ref(null)
 const ProfilOpen = ref(false)
 
 const filteredPurchases = computed(() => {
-    if (!search.value.trim()) {
-        return purchases.value
+    let result = purchases.value
+
+    if (search.value.trim()) {
+        const query = search.value.toLowerCase()
+        result = result.filter(item => {
+            return item.item_name?.toLowerCase().includes(query) || 
+                   item.item_description?.toLowerCase().includes(query)
+        })
     }
-    
-    const query = search.value.toLowerCase()
-    
-    return purchases.value.filter(item => {
-        const nameMatch = item.item_name?.toLowerCase().includes(query)
-        const descMatch = item.item_description?.toLowerCase().includes(query)
-        
-        return nameMatch || descMatch
-    })
+
+    return [...result].sort((a, b) => a.item_name.localeCompare(b.item_name))
 })
 
 const totalPrice = computed(() => {
@@ -42,6 +41,7 @@ const bgColors = ['bg-red-400', 'bg-blue-400', 'bg-green-400', 'bg-yellow-400', 
 const getRandomColor = (id) => {
     return bgColors[id % bgColors.length]
 }
+
 async function GetProfilePick() {
     try {
         const token = localStorage.getItem('token')
@@ -58,11 +58,15 @@ async function GetProfilePick() {
             },
         })
 
+        const data = await response.json()
+
         if (response.ok) {
-            const data = await response.json()
             profile_url.value = data.picture_url || ""
         } else {
-            message.value = "Error when loading a list"
+            message.value = data.error || "Error when loading a picture"
+            if (data.details) {
+                console.error("Tech details:", data.details)
+            }
         }
     } catch (error) {
         message.value = error
@@ -86,14 +90,13 @@ async function loadPurchases() {
             },
         })
 
+        const data = await response.json()
+
         if (response.ok) {
-            const data = await response.json()
             purchases.value = data || []
-        } else if (response.status === 401) {
-            message.value = "Session ended. Please login again."
-            handleLogout()
         } else {
-            message.value = "Error when loading a list"
+            message.value = data.error || "Error when loading a list"
+            if (response.status === 401) handleLogout()
         }
     } catch (error) {
         message.value = "Server doesn't respond"

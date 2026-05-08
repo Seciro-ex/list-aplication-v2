@@ -22,10 +22,13 @@ async function handleLogin() {
 
         if (response.ok) {
             localStorage.setItem('token', data.token)
-            message.value = "Success login!"
+            message.value = data.message
             setTimeout(() => emit('login-success'), 500)
         } else {
             message.value = "Error: " + (data.error || "wrong credentials")
+            if (data.details) {
+                console.error("Tech details:", data.details)
+            }
         }
     } catch (error) {
         message.value = "Invalid username or password!"

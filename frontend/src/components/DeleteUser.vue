@@ -18,9 +18,13 @@ async function VerifyUser() {
             })
         })
 
+        const data = await response.json()
+
         if (!response.ok) {
-            const data = await response.json()
             message.value = "Error: " + (data.error || "Wrong password")
+            if (data.details) {
+                console.error("Tech details:", data.details)
+            }
             return
         }
         await DeleteUser()
@@ -43,11 +47,14 @@ async function DeleteUser() {
                 "Authorization": `Bearer ${token}`
             },
         }) 
+
+        const data = await response.json()
+
         if (response.ok) {
-            message.value = "User deleted. You will be redirecting to login page!"
+            message.value = data.message
             setTimeout(() => emit('user-deleted'), 2000)
         } else {
-            message.value = "Error to delete user"
+            message.value = data.error
         }
     } catch (error) {
         message.value = "Error: " + error

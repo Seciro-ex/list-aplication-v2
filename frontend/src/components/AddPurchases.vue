@@ -46,17 +46,18 @@ async function addItem() {
             })
         })
 
+        const data = await response.json()
+
         if (response.ok) {
             item_name.value = ''
             cost.value = 0
             item_url.value = ''
             image_url.value = ''
             item_description.value = ''
-            message.value = "Item added succsesful!"
+            message.value = data.message
             emit('added-item')
         } else {
-            const data = await response.json()
-            message.value = "Ошибка: " + (data.error || "Не удалось добавить")
+            message.value = data.error
         }
     } catch(error) {
         message.value = "Error: bad data " + error

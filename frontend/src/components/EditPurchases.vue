@@ -45,11 +45,16 @@ async function EditItem() {
             item_description: item_description.value
         })
     })
+
+    const data = await response.json()
+
     if (response.ok) {
         emit('item-edited')
     } else {
-        const errorText = await response.text()
-        message.value = "Error: " + errorText
+        message.value = data.error
+        if (data.details) {
+            console.error("Tech details:", data.details)
+        }
     }
     } catch(error) {
         message.value = "Error: " + error
