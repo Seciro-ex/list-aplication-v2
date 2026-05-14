@@ -130,13 +130,13 @@ onMounted(() => {
 </script>
 
 <template>
-<div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
-        <div class="flex justify-between items-center mb-4 border-b pb-4">
-            <h1 class="text-2xl font-bold text-gray-800">My Shoping List</h1>
+<div class="max-w-2xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700">
+        <div class="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-700 pb-4">
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-white">My Shoping List</h1>
             <div @click="emit('profile')" class="cursor-pointer">
                 <img v-if="profile_url" 
                     :src="profile_url" 
-                    class="w-16 h-16 rounded-full object-cover shadow-sm border border-gray-200 hover:scale-105 transition" 
+                    class="w-16 h-16 rounded-full object-cover shadow-sm border border-slate-200 dark:border-slate-600 hover:scale-105 transition" 
                     alt="Profile">
                 
                 <div v-else 
@@ -146,32 +146,43 @@ onMounted(() => {
             </div>
         </div>
 
-        <div class="flex gap-2 pb-4 mb-6 border-b justify-between">
+        <div class="flex gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-slate-700 justify-between">
             <button @click="isFormVisible = !isFormVisible" 
-                    class="text-sm bg-green-50 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 transition">
+                    class="text-sm font-medium px-4 py-2 rounded-lg transition-colors
+                           bg-emerald-50 text-emerald-600 hover:bg-emerald-100 
+                           dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30">
                 {{ isFormVisible ? 'Close' : 'Add New' }}
             </button>
             <button @click="handleLogout" 
-                    class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition">
+                    class="text-sm font-medium px-4 py-2 rounded-lg transition-colors
+                           bg-rose-50 text-rose-600 hover:bg-rose-100 
+                           dark:bg-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/30">
                 Sign-out
             </button>
         </div>
         <AddPurchases v-if="isFormVisible" @added-item="handlePurchaseAdded" />
 
-        <div class="flex justify-between p-4 bg-gray-50 rounded-lg shadow-sm mb-4">
-            <input v-model="search" type="text" placeholder="Search" class=" p-2 border border-gray-80 rounded outline-none focus:ring-2 focus:ring-gray-200">
-            <h1 class="flex mt-auto mb-auto">Total price: {{ totalPrice }} €</h1>
+        <div class="flex justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg shadow-sm mb-4 border border-transparent dark:border-slate-700">
+            <input v-model="search" type="text" placeholder="Search..." 
+                   class="p-2 border rounded-lg outline-none transition-colors
+                          bg-white text-slate-900 border-slate-200 focus:ring-2 focus:ring-blue-500 
+                          dark:bg-slate-800 dark:text-white dark:border-slate-600 dark:focus:ring-blue-500 dark:placeholder-slate-400">
+            <h1 class="flex items-center font-semibold text-slate-800 dark:text-slate-200">
+                Total price: <span class="ml-2 text-emerald-600 dark:text-emerald-400">{{ totalPrice }} €</span>
+            </h1>
+            <!-- END FOR NOW -->
         </div>
 
         <div class="space-y-4">
             <div v-for="item in filteredPurchases" :key="item.id">
                 
                 <div v-if="itemToEditId !== item.id" 
-                    class="group relative flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                    class="group relative flex items-center justify-between p-4 rounded-lg shadow-sm border transition-all duration-300
+                           bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:shadow-md dark:hover:border-slate-600">
                     
                     <div class="flex items-center gap-4 w-full">
                         <div class="flex items-center gap-6 w-full">
-                            <div class="w-32 h-20 shrink-0 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center p-2 overflow-hidden shadow-sm">
+                            <div class="w-32 h-20 shrink-0 bg-gray-50 dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-gray-600 flex items-center justify-center p-2 overflow-hidden shadow-sm">
                                 <img v-if="item.image_url" :src="item.image_url" alt="item" class="w-full h-full object-contain">
                                 <div v-else :class="['w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-xl uppercase', getRandomColor(item.id)]">
                                     {{ item.item_name[0] }}
@@ -179,7 +190,7 @@ onMounted(() => {
                             </div>
 
                             <div class="grow min-w-0">
-                                <p class="font-bold text-gray-900 text-lg truncate">
+                                <p class="font-bold text-gray-900 dark:text-yellow-50 text-lg truncate">
                                     {{ item.item_name }}
                                 </p>
 
@@ -189,10 +200,10 @@ onMounted(() => {
 
                                 <div class="flex items-center gap-2">
                                     <template v-if="itemToDeleteId !== item.id">
-                                        <button @click="itemToEditId = item.id" class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded uppercase font-bold hover:bg-orange-200">
+                                        <button @click="itemToEditId = item.id" class="text-[10px] bg-orange-100 dark:bg-slate-700 dark:hover:bg-slate-950 text-orange-700 dark:text-orange-400 px-2 py-1 rounded uppercase font-bold hover:bg-orange-200">
                                             Edit
                                         </button>
-                                        <button @click="itemToDeleteId = item.id" class="text-[10px] bg-red-100 text-red-700 px-2 py-1 rounded uppercase font-bold hover:bg-red-200">
+                                        <button @click="itemToDeleteId = item.id" class="text-[10px] bg-red-100 dark:bg-slate-700 dark:hover:bg-slate-950 text-red-700 dark:text-red-400 px-2 py-1 rounded uppercase font-bold hover:bg-red-200">
                                             Delete
                                         </button>
                                     </template>
@@ -215,7 +226,7 @@ onMounted(() => {
                         </div>
                     </div>
                     
-                    <div class="text-xl font-bold text-green-600 whitespace-nowrap ml-4">
+                    <div class="text-xl font-bold text-green-600 dark:text-lime-600 whitespace-nowrap ml-4">
                         {{ item.cost }} €
                     </div>
                 </div>

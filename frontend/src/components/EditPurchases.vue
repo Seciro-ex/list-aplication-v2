@@ -63,7 +63,7 @@ async function EditItem() {
 </script>
 
 <template>
-    <div class="bg-green-50 p-5 rounded-lg mb-6 border-2 border-dashed border-orange-300 shadow-inner">
+    <div class="bg-orange-50 p-5 rounded-lg mb-6 border-2 border-dashed border-orange-300 shadow-inner">
         <h3 class="font-bold text-orange-800 mb-4">Edit item</h3>
         
         <div class="space-y-3">
