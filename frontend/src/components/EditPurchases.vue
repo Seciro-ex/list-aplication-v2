@@ -63,35 +63,54 @@ async function EditItem() {
 </script>
 
 <template>
-    <div class="bg-orange-50 p-5 rounded-lg mb-6 border-2 border-dashed border-orange-300 shadow-inner">
-        <h3 class="font-bold text-orange-800 mb-4">Edit item</h3>
+    <div class="p-5 rounded-xl mb-6 border-2 border-dashed transition-all duration-300
+                bg-amber-50 border-amber-200 
+                dark:bg-amber-900/10 dark:border-amber-500/30">
+        <h3 class="font-bold mb-4 text-amber-800 dark:text-amber-400">Edit item</h3>
         
         <div class="space-y-3">
             <input v-model="item_name" type="text" placeholder="Item name (e.g. RTX 4090)"
-                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                   class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
             
-            <input v-model.number="cost" type="number" placeholder="Cost (₽)"
-                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+            <input v-model.number="cost" type="number" placeholder="Cost (€)"
+                   class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
             
             <input v-model="item_url" type="text" placeholder="Shop link (optional)"
-                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                   class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
             
             <input v-model="image_url" type="text" placeholder="Image link (optional)"
-                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                   class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
             
             <input v-model="item_description" type="text" placeholder="Item description(optional)"
-                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                   class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
             
-            <button @click="validateBeforeEdit" 
-                    class="w-full bg-orange-500 text-white font-bold py-2 rounded shadow hover:bg-orange-600 transition">
-                Save to List
-            </button>
-            <button @click="emit('cancel')" 
-                    class="w-full bg-red-500 text-white font-bold py-2 rounded shadow hover:bg-orange-600 transition">
-                Cancel
-            </button>
+            <div class="flex flex-col gap-2 pt-2">
+                <button @click="validateBeforeEdit" 
+                        class="w-full font-bold py-2 rounded-lg shadow-md transition-all active:scale-95
+                               bg-amber-600 text-white hover:bg-amber-700
+                               dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30">
+                    Save Changes
+                </button>
+                
+                <button @click="emit('cancel')" 
+                        class="w-full py-2 rounded-lg font-medium transition-all
+                               bg-slate-200 text-slate-700 hover:bg-slate-300
+                               dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                    Cancel
+                </button>
+            </div>
         </div>
 
-        <p v-if="message" class="text-red-500 text-sm mt-3 text-center">{{ message }}</p>
+        <p v-if="message" class="text-red-500 dark:text-rose-400 text-sm mt-3 text-center">{{ message }}</p>
     </div>
 </template>

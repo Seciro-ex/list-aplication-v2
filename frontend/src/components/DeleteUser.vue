@@ -65,23 +65,34 @@ async function DeleteUser() {
 </script>
 
 <template>
-    <div class="bg-red-50 p-5 rounded-lg mb-6 border-2 border-dashed border-red-300 shadow-inner">
-        <h3 class="font-bold text-orange-800 mb-4 flex justify-center">DELETE USER</h3>
-        <p class="mb-4">WARNING! This action is irreversible and it's automatically deletes all your purchases and account</p>
+    <div class="p-5 rounded-xl border-2 border-dashed transition-all duration-300 shadow-inner
+                bg-rose-50 border-rose-200 
+                dark:bg-rose-950/20 dark:border-rose-500/30">
+        <h3 class="font-bold mb-4 flex justify-center items-center gap-2 text-rose-800 dark:text-rose-400">DELETE USER</h3>
+        <p class="mb-6 text-sm text-center leading-relaxed text-slate-600 dark:text-slate-300">
+            <span class="font-bold text-rose-600 dark:text-rose-400">WARNING!</span> 
+            This action is irreversible. It will permanently delete your profile and all associated purchases.
+        </p>
         
         <div class="space-y-3">
         <input v-model="password" type="password" placeholder="Enter your password"
-            class="w-full p-2 border border-red-200 rounded outline-none focus:ring-2 focus:ring-red-400" />
+            class="w-full p-2 border rounded-lg outline-none transition-all
+                       bg-white text-slate-900 border-rose-200 focus:ring-2 focus:ring-rose-500
+                       dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-rose-500 dark:placeholder-rose-900/30" />
         
         <button @click="VerifyUser" 
-                class="w-full bg-red-500 text-white font-bold py-2 rounded shadow hover:bg-red-600 transition" :disabled="!password">
-            Delete User
+                class="w-full font-bold py-2 rounded-lg shadow-md transition-all active:scale-95
+                               bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed
+                               dark:bg-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/30 " :disabled="!password">
+            Confirm Destruction
         </button>
         <button @click="emit('cancel')" 
-                class="w-full bg-orange-500 text-white font-bold py-2 rounded shadow hover:bg-orange-600 transition">
-            Cancel
+                class="w-full py-2 rounded-lg font-medium transition-all
+                               bg-slate-200 text-slate-700 hover:bg-slate-300
+                               dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+            I changed my mind
         </button>
         </div>
-        <p v-if="message" class="text-red-500 text-sm mt-3 text-center">{{ message }}</p>
+        <p v-if="message" class="text-rose-500 dark:text-rose-400 text-sm mt-3 text-center font-medium">{{ message }}</p>
     </div>
 </template>

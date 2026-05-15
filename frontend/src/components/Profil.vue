@@ -59,70 +59,92 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
-        <EditUser 
-            v-if="UserEdit === true" 
-            :username="userInfo.username"
-            :id="userInfo.id"
-            :picture_url="userInfo.picture_url"
-            :email="userInfo.email"
-            @user-edited="() => { handleProfilInfo(); UserEdit = false }"
-            @cancel="UserEdit = false" 
-        />
-        <DeleteUser
-            v-if="UserDelete === true"
-            :id="userInfo.id"
-            :username="userInfo.username"
-            @user-deleted="emit('logout')"
-            @cancel="UserDelete = false"
-        />
-        <div v-if="userInfo && UserEdit == false && UserDelete == false">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">User Profile</h2>
+    <div class="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border border-slate-100 transition-all duration-300
+                dark:bg-slate-800 dark:border-slate-700">
+        
+        <Transition name="swap" mode="out-in">
             
-            <div class="bg-white rounded-lg flex items-center justify-center">
-                <img class="mb-4 w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-xl bg-indigo-500 uppercase shadow-sm hover:scale-125 transition-all" :src="userInfo.picture_url" alt="U">
+            <div v-if="UserEdit" key="edit">
+                <EditUser 
+                    :username="userInfo.username"
+                    :id="userInfo.id"
+                    :picture_url="userInfo.picture_url"
+                    :email="userInfo.email"
+                    @user-edited="() => { handleProfilInfo(); UserEdit = false }"
+                    @cancel="UserEdit = false" 
+                />
             </div>
 
-            <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                <p class="text-sm text-gray-500">Username</p>
-                <p class="text-lg break-all font-semibold text-gray-800">{{ userInfo.username }}</p>
+            <div v-else-if="UserDelete" key="delete">
+                <DeleteUser
+                    :id="userInfo.id"
+                    :username="userInfo.username"
+                    @user-deleted="emit('logout')"
+                    @cancel="UserDelete = false"
+                />
             </div>
 
-            <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                <p class="text-sm text-gray-500">Email</p>
-                <p class="text-lg font-mono text-gray-800">{{ userInfo.email }}</p>
-            </div>
+            <div v-else-if="userInfo" key="info">
+                <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-white">User Profile</h2>
+                
+                <div class="flex flex-col items-center mb-6">
+                    <div class="p-1 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-600">
+                        <img v-if="userInfo.picture_url" 
+                             :src="userInfo.picture_url" 
+                             class="w-24 h-24 rounded-full object-cover shadow-md hover:scale-110 transition-transform duration-300" 
+                             alt="Avatar">
+                        <div v-else 
+                             class="w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-2xl uppercase">
+                            {{ userInfo.username[0] }}
+                        </div>
+                    </div>
+                </div>
 
-            <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                <p class="text-sm text-gray-500">Created at</p>
-                <p class="text-lg font-mono text-gray-800">{{ formattedDate }}</p>
-            </div>
-        </div>
+                <div class="space-y-4 mb-6">
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-transparent dark:border-slate-700/50">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Username</p>
+                        <p class="text-lg font-medium text-slate-800 dark:text-white break-all">{{ userInfo.username }}</p>
+                    </div>
 
-        <div v-else-if="!message && UserEdit == false && UserDelete == false" class="text-center py-4">
-            <p class="text-gray-400 animate-pulse">Loading profile...</p>
-        </div>
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-transparent dark:border-slate-700/50">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Email</p>
+                        <p class="text-lg font-medium text-slate-800 dark:text-white">{{ userInfo.email }}</p>
+                    </div>
 
-        <div class="flex items-center justify-between mb-2">
-            <div class="flex w-full mr-1">
-                <button @click="UserEdit = !UserEdit, UserDelete = false" class="w-full py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition font-medium">
-                    Edit
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-transparent dark:border-slate-700/50">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Created at</p>
+                        <p class="text-sm font-mono text-slate-600 dark:text-slate-300">{{ formattedDate }}</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mb-3">
+                    <button @click="UserEdit = true" 
+                            class="flex-1 py-2 font-bold rounded-lg transition-all active:scale-95
+                                   bg-amber-100 text-amber-700 hover:bg-amber-200 
+                                   dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30">
+                        Edit
+                    </button>
+                    <button @click="UserDelete = true" 
+                            class="flex-1 py-2 font-bold rounded-lg transition-all active:scale-95
+                                   bg-rose-100 text-rose-700 hover:bg-rose-200 
+                                   dark:bg-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/30">
+                        Delete
+                    </button>
+                </div>
+                
+                <button @click="emit('go-to-main')" 
+                        class="w-full py-2 font-medium rounded-lg transition-all
+                               bg-slate-100 text-slate-600 hover:bg-slate-200
+                               dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                    Back to List
                 </button>
             </div>
-            <div class="flex w-full ml-1">
-                <button @click="UserDelete = !UserDelete, UserEdit = false" class="w-full py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition font-medium">
-                    Delete User
-                </button> 
-            </div>
-        </div>
 
-        <div class="flex flex-col gap-3">
-            <button @click="emit('go-to-main')" 
-                    class="w-full py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
-                Back to List
-            </button>
-            
-            <p v-if="message" class="text-red-500 text-center text-sm mt-2">{{ message }}</p>
-        </div>
+            <div v-else class="text-center py-12" key="loading">
+                <p class="text-slate-400 animate-pulse">Loading profile...</p>
+            </div>
+        </Transition>
+
+        <p v-if="message" class="text-rose-500 dark:text-rose-400 text-center text-sm mt-4 font-medium">{{ message }}</p>
     </div>
 </template>

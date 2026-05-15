@@ -91,35 +91,49 @@ async function EditUser() {
 </script>
 
 <template>
-<div class="bg-orange-50 p-5 rounded-lg mb-6 border-2 border-dashed border-orange-300 shadow-inner">
-        <h3 class="font-bold text-orange-800 mb-4">Edit Profile</h3>
+<div class="bg-amber-50 border-amber-200 p-5 rounded-lg border-2 border-dashed dark:bg-amber-900/10 dark:border-amber-500/30 shadow-inner">
+        <h3 class="font-bold text-orange-800 dark:text-amber-400 mb-4">Edit Profile</h3>
         
         <div class="space-y-3">
             <input v-model="username" type="text" placeholder="Username"
-                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                   class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
             
             <input v-model="picture_url" type="text" placeholder="Profile picture URL"
-                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                   class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
             
             <input v-model="email" type="email" placeholder="Email"
-                   class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                   class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
             
             <input v-model="old_password" type="password" placeholder="Old password (required to save)"
-                    class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                    class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
 
             <input v-model="password" type="password" placeholder="New password (leave blank to keep current)"
-                    class="w-full p-2 border border-orange-200 rounded outline-none focus:ring-2 focus:ring-orange-400" />
+                    class="w-full p-2 border rounded-lg outline-none transition-all
+                          bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
+                          dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
 
             <button @click="ValidateInfo" 
-                    class="w-full bg-orange-500 text-white font-bold py-2 rounded shadow hover:bg-orange-600 transition">
+                    class="w-full font-bold py-2 rounded-lg shadow-md transition-all active:scale-95
+                               bg-amber-600 text-white hover:bg-amber-700
+                               dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30">
                 Save Profile
             </button>
             <button @click="emit('cancel')" 
-                    class="w-full bg-red-500 text-white font-bold py-2 rounded shadow hover:bg-red-600 transition">
+                    class="w-full py-2 rounded-lg font-medium transition-all
+                               bg-slate-200 text-slate-700 hover:bg-slate-300
+                               dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
                 Cancel
             </button>
         </div>
 
-        <p v-if="message" class="text-red-500 text-sm mt-3 text-center">{{ message }}</p>
+        <p v-if="message" class="text-red-500 dark:text-rose-400 text-sm mt-3 text-center">{{ message }}</p>
     </div>
 </template>

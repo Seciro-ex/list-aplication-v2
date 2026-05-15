@@ -38,7 +38,7 @@ async function handleLogin() {
 
 <template>
     <div class="max-w-md mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
-        <h1 class="text-2xl font-bold mb-6 text-gray-800 dark:text-orange-100">Sing-in</h1>
+        <h1 class="text-2xl font-bold mb-6 text-slate-800 dark:text-white">Sing-in</h1>
         
         <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
@@ -75,10 +75,9 @@ async function handleLogin() {
         {{ message }}
         </p>
 
-        <div class="mt-6 pt-6 border-t border-gray-100 dark:border-slate-600">
-          <button @click="emit('go-to-registration')" class="w-full text-sm text-blue-600 hover:underline">
-          Doesn't have a account? Register
-          </button>
-        </div>
+
+        <button @click="emit('go-to-registration')" class="w-full mt-4 text-sm text-blue-500 dark:text-blue-400 hover:underline">
+        Doesn't have a account? Register
+        </button>
     </div>
 </template>
