@@ -30,11 +30,11 @@ async function ValidateInfo() {
         return
     }
     try {
-        const response = await fetch("http://localhost:8081/api/login", {
+        const response = await fetch("/api/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                username: props.username, 
+                username: props.username,
                 password: old_password.value
             })
         })
@@ -53,35 +53,35 @@ async function ValidateInfo() {
 
 async function EditUser() {
     try {
-    const token = localStorage.getItem('token')
-    if (!token) return
+        const token = localStorage.getItem('token')
+        if (!token) return
 
-    const url = `http://localhost:8081/api/edit-user?id=${props.id}`
+        const url = `http://localhost:8081/api/edit-user?id=${props.id}`
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json", 
-            "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-            username: username.value,
-            picture_url: picture_url.value,
-            email: email.value,
-            password: password.value
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                username: username.value,
+                picture_url: picture_url.value,
+                email: email.value,
+                password: password.value
+            })
         })
-    })
 
-    const data = await response.json()
+        const data = await response.json()
 
-    if (response.ok) {
-        emit('user-edited')
-    } else {
-        message.value = data.error
-        if (data.details) {
-            console.error("Tech details:", data.details)
+        if (response.ok) {
+            emit('user-edited')
+        } else {
+            message.value = data.error
+            if (data.details) {
+                console.error("Tech details:", data.details)
+            }
         }
-    }
 
     } catch (error) {
         message.value = error
@@ -91,43 +91,42 @@ async function EditUser() {
 </script>
 
 <template>
-<div class="bg-amber-50 border-amber-200 p-5 rounded-lg border-2 border-dashed dark:bg-amber-900/10 dark:border-amber-500/30 shadow-inner">
+    <div
+        class="bg-amber-50 border-amber-200 p-5 rounded-lg border-2 border-dashed dark:bg-amber-900/10 dark:border-amber-500/30 shadow-inner">
         <h3 class="font-bold text-orange-800 dark:text-amber-400 mb-4">Edit Profile</h3>
-        
+
         <div class="space-y-3">
             <input v-model="username" type="text" placeholder="Username"
-                   class="w-full p-2 border rounded-lg outline-none transition-all
+                class="w-full p-2 border rounded-lg outline-none transition-all
                           bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
                           dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
-            
+
             <input v-model="picture_url" type="text" placeholder="Profile picture URL"
-                   class="w-full p-2 border rounded-lg outline-none transition-all
+                class="w-full p-2 border rounded-lg outline-none transition-all
                           bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
                           dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
-            
+
             <input v-model="email" type="email" placeholder="Email"
-                   class="w-full p-2 border rounded-lg outline-none transition-all
+                class="w-full p-2 border rounded-lg outline-none transition-all
                           bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
                           dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
-            
+
             <input v-model="old_password" type="password" placeholder="Old password (required to save)"
-                    class="w-full p-2 border rounded-lg outline-none transition-all
+                class="w-full p-2 border rounded-lg outline-none transition-all
                           bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
                           dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
 
             <input v-model="password" type="password" placeholder="New password (leave blank to keep current)"
-                    class="w-full p-2 border rounded-lg outline-none transition-all
+                class="w-full p-2 border rounded-lg outline-none transition-all
                           bg-white text-slate-900 border-amber-200 focus:ring-2 focus:ring-amber-500
                           dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:focus:ring-amber-500 dark:placeholder-amber-700/50" />
 
-            <button @click="ValidateInfo" 
-                    class="w-full font-bold py-2 rounded-lg shadow-md transition-all active:scale-95
+            <button @click="ValidateInfo" class="w-full font-bold py-2 rounded-lg shadow-md transition-all active:scale-95
                                bg-amber-600 text-white hover:bg-amber-700
                                dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30">
                 Save Profile
             </button>
-            <button @click="emit('cancel')" 
-                    class="w-full py-2 rounded-lg font-medium transition-all
+            <button @click="emit('cancel')" class="w-full py-2 rounded-lg font-medium transition-all
                                bg-slate-200 text-slate-700 hover:bg-slate-300
                                dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
                 Cancel

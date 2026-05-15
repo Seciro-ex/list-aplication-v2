@@ -28,7 +28,7 @@ async function handleValidation() {
 
 async function handleRegistration() {
     try {
-        const response = await fetch("http://localhost:8081/api/register", {
+        const response = await fetch("/api/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -58,50 +58,48 @@ async function handleRegistration() {
 <template>
     <div class="max-w-md mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
         <h1 class="text-2xl font-bold mb-6 text-gray-800 dark:text-orange-100">Sign-up</h1>
-        
+
         <form @submit.prevent="handleValidation" class="space-y-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-orange-50">Username:</label>
-            <input v-model="username" type="text" required
-                class="w-full p-2 border rounded-lg outline-none 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-orange-50">Username:</label>
+                <input v-model="username" type="text" required class="w-full p-2 border rounded-lg outline-none 
                 bg-white text-gray-950
                 dark:bg-slate-900  dark:border-gray-600 dark:text-yellow-50 
                 focus:ring-2 focus:ring-blue-500 dark:focus:ring-yellow-50">
-        </div>
+            </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-orange-50">E-mail:</label>
-            <input v-model="email" type="email" required
-                class="w-full p-2 border rounded-lg outline-none 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-orange-50">E-mail:</label>
+                <input v-model="email" type="email" required class="w-full p-2 border rounded-lg outline-none 
                 bg-white text-gray-950
                 dark:bg-slate-900  dark:border-gray-600 dark:text-yellow-50 
                 focus:ring-2 focus:ring-blue-500 dark:focus:ring-yellow-50">
-        </div>
+            </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-orange-50">Password:</label>
-            <input v-model="password" type="password" required
-                class="w-full p-2 border rounded-lg outline-none 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-orange-50">Password:</label>
+                <input v-model="password" type="password" required class="w-full p-2 border rounded-lg outline-none 
                 bg-white text-gray-950
                 dark:bg-slate-900  dark:border-gray-600 dark:text-yellow-50 
                 focus:ring-2 focus:ring-blue-500 dark:focus:ring-yellow-50">
-        </div>
+            </div>
 
-        <button type="submit" 
-                class="w-full py-2 rounded-lg font-semibold transition
+            <button type="submit" class="w-full py-2 rounded-lg font-semibold transition
                 bg-green-600 text-white hover:bg-green-700 
                 dark:bg-lime-600 dark:text-yellow-50 dark:hover:bg-lime-700">
-            Create account
-        </button>
+                Create account
+            </button>
         </form>
 
-        <p v-if="message" :class="{'text-green-600 dark:text-green-400': !message.includes('Error'), 'text-red-600 dark:text-red-400': message.includes('Error')}" 
-        class="mt-4 text-center text-sm font-medium">
-        {{ message }}
+        <p v-if="message"
+            :class="{ 'text-green-600 dark:text-green-400': !message.includes('Error'), 'text-red-600 dark:text-red-400': message.includes('Error') }"
+            class="mt-4 text-center text-sm font-medium">
+            {{ message }}
         </p>
 
-        <button @click="emit('go-to-login')" class="w-full mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-        Already have account? Login
+        <button @click="emit('go-to-login')"
+            class="w-full mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            Already have account? Login
         </button>
     </div>
 </template>
